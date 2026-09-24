@@ -1,4 +1,4 @@
-import React, { useState, useId } from 'react';
+import React, { useState, useEffect, useId } from 'react';
 import { RotateCcw } from 'lucide-react';
 
 interface TNPSState {
@@ -8,13 +8,43 @@ interface TNPSState {
   customTotal: number | null;
 }
 
-export function TNPSCalculator() {
-  const [values, setValues] = useState<TNPSState>({
+const TNPS_STORAGE_KEY = 'vodafone_tnps_state_v1';
+
+function getStoredTNPSState(): TNPSState {
+  const defaultState: TNPSState = {
     promoters: null,
     passive: null,
     detractors: null,
     customTotal: null,
-  });
+  };
+  if (typeof window === 'undefined') return defaultState;
+  try {
+    const raw = localStorage.getItem(TNPS_STORAGE_KEY);
+    if (!raw) return defaultState;
+    const parsed = JSON.parse(raw);
+    return {
+      promoters: typeof parsed?.promoters === 'number' ? parsed.promoters : null,
+      passive: typeof parsed?.passive === 'number' ? parsed.passive : null,
+      detractors: typeof parsed?.detractors === 'number' ? parsed.detractors : null,
+      customTotal: typeof parsed?.customTotal === 'number' ? parsed.customTotal : null,
+    };
+  } catch (err) {
+    console.error('Error reading saved TNPS state:', err);
+    return defaultState;
+  }
+}
+
+export function TNPSCalculator() {
+  const [values, setValues] = useState<TNPSState>(getStoredTNPSState);
+
+  // Save changes to device local storage
+  useEffect(() => {
+    try {
+      localStorage.setItem(TNPS_STORAGE_KEY, JSON.stringify(values));
+    } catch (err) {
+      console.error('Error saving TNPS state:', err);
+    }
+  }, [values]);
 
   const p = values.promoters ?? 0;
   const pass = values.passive ?? 0;
@@ -44,6 +74,11 @@ export function TNPSCalculator() {
       detractors: null,
       customTotal: null,
     });
+    try {
+      localStorage.removeItem(TNPS_STORAGE_KEY);
+    } catch (err) {
+      console.error('Error clearing saved TNPS state:', err);
+    }
   };
 
   const pInputId = useId();
@@ -52,22 +87,22 @@ export function TNPSCalculator() {
   const totalInputId = useId();
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 lg:p-6 flex flex-col justify-between h-full">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-3.5 sm:p-5 lg:p-6 flex flex-col justify-between h-full">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 sm:pb-3 mb-2.5 sm:mb-3">
+      <div className="flex items-center justify-between border-b border-slate-100 pb-2 sm:pb-3 mb-2 sm:mb-3">
         <div>
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-[#E60000]"></span>
-            <h3 className="font-bold text-slate-900 text-sm">TNPS Calculator</h3>
+            <h3 className="font-bold text-slate-900 text-xs sm:text-sm">TNPS Calculator</h3>
           </div>
-          <p className="text-[11px] text-slate-500 mt-0.5">
+          <p className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5">
             (Promoters - Detractors) / Total
           </p>
         </div>
         <div className="flex items-center gap-1.5">
           <button
             onClick={handleReset}
-            className="text-[11px] font-medium text-slate-500 hover:text-[#E60000] transition-colors p-1 rounded-md hover:bg-red-50 flex items-center gap-1"
+            className="text-[10px] sm:text-[11px] font-medium text-slate-500 hover:text-[#E60000] transition-colors p-1 rounded-md hover:bg-red-50 flex items-center gap-1"
             title="Clear TNPS inputs"
             aria-label="Clear TNPS inputs"
           >
@@ -78,12 +113,12 @@ export function TNPSCalculator() {
       </div>
 
       {/* 4 Inputs Grid: Promoters, Passive, Detractors, Total */}
-      <div className="grid grid-cols-4 gap-2 mb-3 sm:mb-4">
+      <div className="grid grid-cols-4 gap-1.5 sm:gap-2 mb-2.5 sm:mb-4">
         {/* Promoters */}
         <div className="flex flex-col">
-          <label htmlFor={pInputId} className="text-[11px] font-bold text-emerald-700 mb-1 flex items-center gap-1 truncate">
+          <label htmlFor={pInputId} className="text-[10px] sm:text-[11px] font-bold text-emerald-700 mb-0.5 sm:mb-1 flex items-center gap-1 truncate">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
-            <span>Promoters</span>
+            <span className="truncate">Promoters</span>
           </label>
           <input
             id={pInputId}
@@ -96,7 +131,7 @@ export function TNPSCalculator() {
               const val = e.target.value === '' ? null : Number(e.target.value);
               setValues((prev) => ({ ...prev, promoters: val }));
             }}
-            className="w-full text-center px-2 py-1.5 text-xs font-bold rounded-lg border border-emerald-200 bg-emerald-50/30 text-emerald-950 focus:outline-none focus:ring-2 focus:ring-emerald-500 print:hidden export-hide-input"
+            className="w-full text-center px-1.5 sm:px-2 py-1.5 text-xs font-bold rounded-lg border border-emerald-200 bg-emerald-50/30 text-emerald-950 focus:outline-none focus:ring-2 focus:ring-emerald-500 print:hidden export-hide-input"
           />
           <div className="hidden print:flex export-show-text items-center justify-center font-bold text-xs py-1.5 px-2 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-950 min-h-[32px]">
             {values.promoters !== null ? values.promoters : <span className="text-emerald-400 font-normal">0</span>}
@@ -105,9 +140,9 @@ export function TNPSCalculator() {
 
         {/* Passive */}
         <div className="flex flex-col">
-          <label htmlFor={passInputId} className="text-[11px] font-bold text-amber-700 mb-1 flex items-center gap-1 truncate">
+          <label htmlFor={passInputId} className="text-[10px] sm:text-[11px] font-bold text-amber-700 mb-0.5 sm:mb-1 flex items-center gap-1 truncate">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
-            <span>Passive</span>
+            <span className="truncate">Passive</span>
           </label>
           <input
             id={passInputId}
@@ -120,7 +155,7 @@ export function TNPSCalculator() {
               const val = e.target.value === '' ? null : Number(e.target.value);
               setValues((prev) => ({ ...prev, passive: val }));
             }}
-            className="w-full text-center px-2 py-1.5 text-xs font-bold rounded-lg border border-amber-200 bg-amber-50/30 text-amber-950 focus:outline-none focus:ring-2 focus:ring-amber-500 print:hidden export-hide-input"
+            className="w-full text-center px-1.5 sm:px-2 py-1.5 text-xs font-bold rounded-lg border border-amber-200 bg-amber-50/30 text-amber-950 focus:outline-none focus:ring-2 focus:ring-amber-500 print:hidden export-hide-input"
           />
           <div className="hidden print:flex export-show-text items-center justify-center font-bold text-xs py-1.5 px-2 rounded-lg border border-amber-200 bg-amber-50 text-amber-950 min-h-[32px]">
             {values.passive !== null ? values.passive : <span className="text-amber-400 font-normal">0</span>}
@@ -129,9 +164,9 @@ export function TNPSCalculator() {
 
         {/* Detractors */}
         <div className="flex flex-col">
-          <label htmlFor={dInputId} className="text-[11px] font-bold text-[#E60000] mb-1 flex items-center gap-1 truncate">
+          <label htmlFor={dInputId} className="text-[10px] sm:text-[11px] font-bold text-[#E60000] mb-0.5 sm:mb-1 flex items-center gap-1 truncate">
             <span className="w-1.5 h-1.5 rounded-full bg-[#E60000] shrink-0"></span>
-            <span>Detractors</span>
+            <span className="truncate">Detractors</span>
           </label>
           <input
             id={dInputId}
@@ -144,7 +179,7 @@ export function TNPSCalculator() {
               const val = e.target.value === '' ? null : Number(e.target.value);
               setValues((prev) => ({ ...prev, detractors: val }));
             }}
-            className="w-full text-center px-2 py-1.5 text-xs font-bold rounded-lg border border-red-200 bg-red-50/30 text-red-950 focus:outline-none focus:ring-2 focus:ring-[#E60000] print:hidden export-hide-input"
+            className="w-full text-center px-1.5 sm:px-2 py-1.5 text-xs font-bold rounded-lg border border-red-200 bg-red-50/30 text-red-950 focus:outline-none focus:ring-2 focus:ring-[#E60000] print:hidden export-hide-input"
           />
           <div className="hidden print:flex export-show-text items-center justify-center font-bold text-xs py-1.5 px-2 rounded-lg border border-red-200 bg-red-50 text-red-950 min-h-[32px]">
             {values.detractors !== null ? values.detractors : <span className="text-red-400 font-normal">0</span>}
@@ -153,8 +188,8 @@ export function TNPSCalculator() {
 
         {/* Total (Sum of 3 or custom) */}
         <div className="flex flex-col">
-          <label htmlFor={totalInputId} className="text-[11px] font-bold text-slate-700 mb-1 flex items-center justify-between truncate">
-            <span>Total (3)</span>
+          <label htmlFor={totalInputId} className="text-[10px] sm:text-[11px] font-bold text-slate-700 mb-0.5 sm:mb-1 flex items-center justify-between truncate">
+            <span className="truncate">Total (3)</span>
             {values.customTotal !== null && (
               <span className="text-[9px] text-slate-400 font-normal print:hidden export-hide-input">custom</span>
             )}
@@ -170,7 +205,7 @@ export function TNPSCalculator() {
               const val = e.target.value === '' ? null : Number(e.target.value);
               setValues((prev) => ({ ...prev, customTotal: val }));
             }}
-            className="w-full text-center px-2 py-1.5 text-xs font-bold rounded-lg border border-slate-300 bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-500 print:hidden export-hide-input"
+            className="w-full text-center px-1.5 sm:px-2 py-1.5 text-xs font-bold rounded-lg border border-slate-300 bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-500 print:hidden export-hide-input"
           />
           <div className="hidden print:flex export-show-text items-center justify-center font-bold text-xs py-1.5 px-2 rounded-lg border border-slate-300 bg-slate-50 text-slate-900 min-h-[32px]">
             {total !== null ? total : <span className="text-slate-400 font-normal">0</span>}

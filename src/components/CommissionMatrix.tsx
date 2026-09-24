@@ -215,73 +215,79 @@ export function CommissionMatrix({ input, result, onChange }: CommissionMatrixPr
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      {/* Mobile Swipe Hint Bar */}
+      <div className="md:hidden flex items-center justify-between px-3 py-1.5 bg-slate-50 border-b border-slate-200 text-[11px] text-slate-500 font-medium">
+        <span>Swipe horizontally to view all metrics</span>
+        <span className="text-[#E60000] font-semibold flex items-center gap-1">6 Components &rarr;</span>
+      </div>
+
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse min-w-[850px]">
+        <table className="w-full text-left border-collapse min-w-[760px] sm:min-w-[850px]">
           {/* Header Row: Main Categories & Weights */}
           <thead>
             {/* Top Categories grouping */}
             <tr className="border-b border-slate-200 text-xs">
               {/* Category Header Label Box */}
-              <th className="p-3.5 w-44 text-center border-r border-slate-200 bg-slate-100/90 border-t-4 border-t-slate-400">
-                <div className="inline-flex items-center justify-center gap-1.5 font-black text-slate-700 uppercase tracking-wider text-xs">
-                  <Layers className="w-4 h-4 text-slate-500 shrink-0" />
+              <th className="p-2 sm:p-3.5 w-28 sm:w-44 text-center border-r border-slate-200 bg-slate-100 border-t-4 border-t-slate-400 sticky left-0 z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                <div className="inline-flex items-center justify-center gap-1 sm:gap-1.5 font-black text-slate-700 uppercase tracking-wider text-[11px] sm:text-xs">
+                  <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-500 shrink-0" />
                   <span>Category</span>
                 </div>
               </th>
 
               {/* Acquisition Category Box (1 col) - Red theme */}
-              <th className="p-3.5 text-center border-r border-slate-200 bg-gradient-to-b from-red-100/80 via-red-50/60 to-red-50/30 border-t-4 border-t-[#E60000]">
+              <th className="p-2.5 sm:p-3.5 text-center border-r border-slate-200 bg-gradient-to-b from-red-100/80 via-red-50/60 to-red-50/30 border-t-4 border-t-[#E60000]">
                 <div className="flex items-center justify-center gap-1.5 mb-1">
-                  <Zap className="w-4 h-4 text-[#E60000] shrink-0" />
-                  <span className="font-black text-red-950 text-sm tracking-tight">Acquisition</span>
+                  <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#E60000] shrink-0" />
+                  <span className="font-black text-red-950 text-xs sm:text-sm tracking-tight">Acquisition</span>
                 </div>
-                <div className="inline-flex items-center gap-1 bg-[#E60000] text-white font-extrabold text-[11px] px-2.5 py-0.5 rounded-full shadow-2xs">
+                <div className="inline-flex items-center gap-1 bg-[#E60000] text-white font-extrabold text-[10px] sm:text-[11px] px-2 sm:px-2.5 py-0.5 rounded-full shadow-2xs">
                   Weight: 60%
                 </div>
               </th>
 
               {/* Enterprise Category Box (2 cols) - Indigo theme */}
-              <th colSpan={2} className="p-3.5 text-center border-r border-slate-200 bg-gradient-to-b from-indigo-100/80 via-indigo-50/60 to-indigo-50/30 border-t-4 border-t-indigo-600">
+              <th colSpan={2} className="p-2.5 sm:p-3.5 text-center border-r border-slate-200 bg-gradient-to-b from-indigo-100/80 via-indigo-50/60 to-indigo-50/30 border-t-4 border-t-indigo-600">
                 <div className="flex items-center justify-center gap-1.5 mb-1">
-                  <Building2 className="w-4 h-4 text-indigo-600 shrink-0" />
-                  <span className="font-black text-indigo-950 text-sm tracking-tight">Enterprise</span>
-                  <span className="bg-indigo-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow-2xs">
+                  <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-600 shrink-0" />
+                  <span className="font-black text-indigo-950 text-xs sm:text-sm tracking-tight">Enterprise</span>
+                  <span className="bg-indigo-600 text-white text-[9px] sm:text-[10px] font-extrabold px-1.5 sm:px-2 py-0.5 rounded-full shadow-2xs">
                     Total: 10%
                   </span>
                 </div>
-                <div className="text-indigo-800 font-semibold text-[11px]">Accounts 5% • Lines 5%</div>
+                <div className="text-indigo-800 font-semibold text-[10px] sm:text-[11px]">Accounts 5% • Lines 5%</div>
               </th>
 
               {/* Terminal Category Box (1 col) - Amber theme */}
-              <th className="p-3.5 text-center border-r border-slate-200 bg-gradient-to-b from-amber-100/80 via-amber-50/60 to-amber-50/30 border-t-4 border-t-amber-500">
+              <th className="p-2.5 sm:p-3.5 text-center border-r border-slate-200 bg-gradient-to-b from-amber-100/80 via-amber-50/60 to-amber-50/30 border-t-4 border-t-amber-500">
                 <div className="flex items-center justify-center gap-1.5 mb-1">
-                  <Smartphone className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span className="font-black text-amber-950 text-sm tracking-tight">Terminal</span>
+                  <Smartphone className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-600 shrink-0" />
+                  <span className="font-black text-amber-950 text-xs sm:text-sm tracking-tight">Terminal</span>
                 </div>
-                <div className="inline-flex items-center gap-1 bg-amber-600 text-white font-extrabold text-[11px] px-2.5 py-0.5 rounded-full shadow-2xs">
+                <div className="inline-flex items-center gap-1 bg-amber-600 text-white font-extrabold text-[10px] sm:text-[11px] px-2 sm:px-2.5 py-0.5 rounded-full shadow-2xs">
                   Weight: 10%
                 </div>
               </th>
 
               {/* Fixed Category Box (2 cols) - Emerald theme */}
-              <th colSpan={2} className="p-3.5 text-center bg-gradient-to-b from-emerald-100/80 via-emerald-50/60 to-emerald-50/30 border-t-4 border-t-emerald-600">
+              <th colSpan={2} className="p-2.5 sm:p-3.5 text-center bg-gradient-to-b from-emerald-100/80 via-emerald-50/60 to-emerald-50/30 border-t-4 border-t-emerald-600">
                 <div className="flex items-center justify-center gap-1.5 mb-1">
-                  <Wifi className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span className="font-black text-emerald-950 text-sm tracking-tight">Fixed</span>
-                  <span className="bg-emerald-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow-2xs">
+                  <Wifi className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 shrink-0" />
+                  <span className="font-black text-emerald-950 text-xs sm:text-sm tracking-tight">Fixed</span>
+                  <span className="bg-emerald-600 text-white text-[9px] sm:text-[10px] font-extrabold px-1.5 sm:px-2 py-0.5 rounded-full shadow-2xs">
                     Total: 20%
                   </span>
                 </div>
-                <div className="text-emerald-800 font-semibold text-[11px]">DSL 16% • Connectivity 4%</div>
+                <div className="text-emerald-800 font-semibold text-[10px] sm:text-[11px]">DSL 16% • Connectivity 4%</div>
               </th>
             </tr>
 
             {/* Sub-column Titles and Units (Component Boxes Row) */}
             <tr className="border-b border-slate-200 text-xs font-semibold text-slate-700">
               {/* Component Header Label Box */}
-              <th className="p-3 text-center border-r border-slate-200 bg-slate-100/80">
-                <div className="inline-flex items-center justify-center gap-1.5 font-black text-slate-700 uppercase tracking-wider text-xs">
-                  <Boxes className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+              <th className="p-2 sm:p-3 text-center border-r border-slate-200 bg-slate-100 sticky left-0 z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                <div className="inline-flex items-center justify-center gap-1 sm:gap-1.5 font-black text-slate-700 uppercase tracking-wider text-[11px] sm:text-xs">
+                  <Boxes className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-500 shrink-0" />
                   <span>Component</span>
                 </div>
               </th>
@@ -290,18 +296,18 @@ export function CommissionMatrix({ input, result, onChange }: CommissionMatrixPr
               {columns.map((col) => (
                 <th
                   key={col.id}
-                  className={`p-2.5 text-center border-r last:border-r-0 border-slate-200 transition-colors ${col.theme.subHeaderBg}`}
+                  className={`p-2 sm:p-2.5 text-center border-r last:border-r-0 border-slate-200 transition-colors ${col.theme.subHeaderBg}`}
                 >
                   <div className="flex items-center justify-center gap-1.5">
                     <span className={`w-2 h-2 rounded-full ${col.theme.accentDot} shrink-0`}></span>
-                    <span className={`font-extrabold text-sm ${col.theme.titleColor}`}>{col.subTitle}</span>
+                    <span className={`font-extrabold text-xs sm:text-sm ${col.theme.titleColor}`}>{col.subTitle}</span>
                   </div>
-                  <div className="text-[11px] font-normal flex items-center justify-center gap-1.5 mt-1">
-                    <span className={`font-extrabold px-2 py-0.5 rounded-sm text-[10px] ${col.theme.badgeBg} ${col.theme.badgeText}`}>
+                  <div className="text-[10px] sm:text-[11px] font-normal flex items-center justify-center gap-1 sm:gap-1.5 mt-0.5 sm:mt-1">
+                    <span className={`font-extrabold px-1.5 sm:px-2 py-0.5 rounded-sm text-[9px] sm:text-[10px] ${col.theme.badgeBg} ${col.theme.badgeText}`}>
                       {col.weightLabel}
                     </span>
                     <span className="text-slate-300">•</span>
-                    <span className={`text-[11px] font-medium ${col.theme.unitColor}`}>{col.unit}</span>
+                    <span className={`text-[10px] sm:text-[11px] font-medium ${col.theme.unitColor}`}>{col.unit}</span>
                   </div>
                 </th>
               ))}
@@ -311,12 +317,12 @@ export function CommissionMatrix({ input, result, onChange }: CommissionMatrixPr
           <tbody>
             {/* ROW 1: Target */}
             <tr className="border-b border-slate-200 hover:bg-slate-50/70 transition-colors">
-              <td className="p-3 font-bold text-slate-900 border-r border-slate-200 bg-slate-50/75">
-                <div className="flex items-center gap-2.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-slate-800"></span>
+              <td className="p-2 sm:p-3 font-bold text-slate-900 border-r border-slate-200 bg-slate-100 sticky left-0 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-slate-800 shrink-0"></span>
                   <div>
-                    <div className="text-sm font-bold text-slate-900">Target</div>
-                    <div className="text-[11px] text-slate-500 font-normal">Assigned target</div>
+                    <div className="text-xs sm:text-sm font-bold text-slate-900">Target</div>
+                    <div className="text-[10px] sm:text-[11px] text-slate-500 font-normal">Assigned target</div>
                   </div>
                 </div>
               </td>
@@ -326,7 +332,7 @@ export function CommissionMatrix({ input, result, onChange }: CommissionMatrixPr
                 const isNegative = currentInput.target !== null && currentInput.target < 0;
 
                 return (
-                  <td key={col.id} className="p-2.5 border-r last:border-r-0 border-slate-200 align-top">
+                  <td key={col.id} className="p-2 sm:p-2.5 border-r last:border-r-0 border-slate-200 align-top">
                     <div className="relative">
                       <input
                         type="number"
@@ -335,7 +341,7 @@ export function CommissionMatrix({ input, result, onChange }: CommissionMatrixPr
                         placeholder="0"
                         value={currentInput.target ?? ''}
                         onChange={(e) => handleTargetChange(col, e.target.value)}
-                        className={`w-full text-center px-3 py-2 text-sm font-semibold rounded-lg border transition-all focus:outline-none focus:ring-2 print:hidden export-hide-input ${
+                        className={`w-full text-center px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg border transition-all focus:outline-none focus:ring-2 print:hidden export-hide-input ${
                           isZero || isNegative
                             ? 'border-red-500 bg-red-50/50 text-red-900 focus:ring-red-500'
                             : currentInput.target !== null
@@ -343,14 +349,14 @@ export function CommissionMatrix({ input, result, onChange }: CommissionMatrixPr
                             : `border-slate-300 bg-white text-slate-900 ${col.theme.focusRing}`
                         }`}
                       />
-                      <div className="hidden print:flex export-show-text items-center justify-center text-center font-bold text-sm text-slate-900 py-1.5 px-2 bg-slate-50 border border-slate-300 rounded-lg min-h-[38px]">
+                      <div className="hidden print:flex export-show-text items-center justify-center text-center font-bold text-xs sm:text-sm text-slate-900 py-1.5 px-2 bg-slate-50 border border-slate-300 rounded-lg min-h-[34px] sm:min-h-[38px]">
                         {currentInput.target !== null ? currentInput.target : <span className="text-slate-400 font-normal">0</span>}
                       </div>
-                      <span className="block text-[10px] text-slate-400 text-center mt-1">
+                      <span className="block text-[10px] text-slate-400 text-center mt-0.5 sm:mt-1">
                         {col.unit}
                       </span>
                       {isZero && (
-                        <span className="block text-[10px] text-[#E60000] text-center font-semibold print:hidden export-hide-input">
+                        <span className="block text-[9px] sm:text-[10px] text-[#E60000] text-center font-semibold print:hidden export-hide-input">
                           Must be &gt; 0
                         </span>
                       )}
@@ -362,12 +368,12 @@ export function CommissionMatrix({ input, result, onChange }: CommissionMatrixPr
 
             {/* ROW 2: Actual / Achieve */}
             <tr className="border-b border-slate-200 hover:bg-slate-50/70 transition-colors">
-              <td className="p-3 font-bold text-slate-900 border-r border-slate-200 bg-slate-50/75">
-                <div className="flex items-center gap-2.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#E60000]"></span>
+              <td className="p-2 sm:p-3 font-bold text-slate-900 border-r border-slate-200 bg-slate-100 sticky left-0 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#E60000] shrink-0"></span>
                   <div>
-                    <div className="text-sm font-bold text-slate-900">Actual / Achieve</div>
-                    <div className="text-[11px] text-slate-500 font-normal">Delivered result</div>
+                    <div className="text-xs sm:text-sm font-bold text-slate-900 leading-tight">Actual</div>
+                    <div className="text-[10px] sm:text-[11px] text-slate-500 font-normal">Delivered result</div>
                   </div>
                 </div>
               </td>
@@ -376,7 +382,7 @@ export function CommissionMatrix({ input, result, onChange }: CommissionMatrixPr
                 const isNegative = currentInput.actual !== null && currentInput.actual < 0;
 
                 return (
-                  <td key={col.id} className="p-2.5 border-r last:border-r-0 border-slate-200 align-top">
+                  <td key={col.id} className="p-2 sm:p-2.5 border-r last:border-r-0 border-slate-200 align-top">
                     <div className="relative">
                       <input
                         type="number"
@@ -385,7 +391,7 @@ export function CommissionMatrix({ input, result, onChange }: CommissionMatrixPr
                         placeholder="0"
                         value={currentInput.actual ?? ''}
                         onChange={(e) => handleActualChange(col, e.target.value)}
-                        className={`w-full text-center px-3 py-2 text-sm font-semibold rounded-lg border transition-all focus:outline-none focus:ring-2 print:hidden export-hide-input ${
+                        className={`w-full text-center px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg border transition-all focus:outline-none focus:ring-2 print:hidden export-hide-input ${
                           isNegative
                             ? 'border-red-500 bg-red-50/50 text-red-900 focus:ring-red-500'
                             : currentInput.actual !== null
@@ -393,10 +399,10 @@ export function CommissionMatrix({ input, result, onChange }: CommissionMatrixPr
                             : `border-slate-300 bg-white text-slate-900 ${col.theme.focusRing}`
                         }`}
                       />
-                      <div className="hidden print:flex export-show-text items-center justify-center text-center font-bold text-sm text-slate-900 py-1.5 px-2 bg-slate-50 border border-slate-300 rounded-lg min-h-[38px]">
+                      <div className="hidden print:flex export-show-text items-center justify-center text-center font-bold text-xs sm:text-sm text-slate-900 py-1.5 px-2 bg-slate-50 border border-slate-300 rounded-lg min-h-[34px] sm:min-h-[38px]">
                         {currentInput.actual !== null ? currentInput.actual : <span className="text-slate-400 font-normal">0</span>}
                       </div>
-                      <span className="block text-[10px] text-slate-400 text-center mt-1">
+                      <span className="block text-[10px] text-slate-400 text-center mt-0.5 sm:mt-1">
                         {col.unit}
                       </span>
                     </div>
@@ -407,12 +413,12 @@ export function CommissionMatrix({ input, result, onChange }: CommissionMatrixPr
 
             {/* ROW 3: Percentages & Contributions */}
             <tr className="bg-slate-50/60">
-              <td className="p-3 font-bold text-slate-900 border-r border-slate-200 bg-slate-100/75 align-top">
-                <div className="flex items-center gap-2.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#E60000]"></span>
+              <td className="p-2 sm:p-3 font-bold text-slate-900 border-r border-slate-200 bg-slate-100 sticky left-0 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] align-top">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#E60000] shrink-0"></span>
                   <div>
-                    <div className="text-sm font-bold text-slate-900">Percentages</div>
-                    <div className="text-[11px] text-slate-500 font-normal">Achievement & Contribution</div>
+                    <div className="text-xs sm:text-sm font-bold text-slate-900 leading-tight">Percentages</div>
+                    <div className="text-[10px] sm:text-[11px] text-slate-500 font-normal">Achieve & Contrib</div>
                   </div>
                 </div>
               </td>
@@ -421,38 +427,38 @@ export function CommissionMatrix({ input, result, onChange }: CommissionMatrixPr
                 const isExceeded = res.missing === 0 && res.achievement !== null && res.achievement >= 100;
 
                 return (
-                  <td key={col.id} className="p-3 border-r last:border-r-0 border-slate-200 align-top">
-                    <div className="flex flex-col gap-2">
+                  <td key={col.id} className="p-2 sm:p-3 border-r last:border-r-0 border-slate-200 align-top">
+                    <div className="flex flex-col gap-1.5 sm:gap-2">
                       {/* Achievement % */}
-                      <div className="bg-white border border-slate-200 rounded-lg p-2 text-center shadow-2xs">
-                        <span className="text-[10px] uppercase font-bold text-slate-500 block mb-0.5">
+                      <div className="bg-white border border-slate-200 rounded-lg p-1.5 sm:p-2 text-center shadow-2xs">
+                        <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-500 block mb-0.5">
                           Achievement %
                         </span>
-                        <span className="text-base font-extrabold text-slate-900">
+                        <span className="text-sm sm:text-base font-extrabold text-slate-900">
                           {formatPercentage(res.achievement)}
                         </span>
                       </div>
 
                       {/* Contribution % with unique category theme color */}
-                      <div className={`${col.theme.contribBg} border ${col.theme.contribBorder} rounded-lg p-2 text-center shadow-2xs`}>
-                        <span className={`text-[10px] uppercase font-extrabold ${col.theme.contribText} block mb-0.5`}>
+                      <div className={`${col.theme.contribBg} border ${col.theme.contribBorder} rounded-lg p-1.5 sm:p-2 text-center shadow-2xs`}>
+                        <span className={`text-[9px] sm:text-[10px] uppercase font-extrabold ${col.theme.contribText} block mb-0.5`}>
                           Contribution %
                         </span>
-                        <span className={`text-base font-extrabold ${col.theme.contribText}`}>
+                        <span className={`text-sm sm:text-base font-extrabold ${col.theme.contribText}`}>
                           {formatPercentage(res.contribution)}
                         </span>
-                        <span className="text-[10px] text-slate-500 block mt-0.5">
+                        <span className="text-[9px] sm:text-[10px] text-slate-500 block mt-0.5">
                           of {col.weightLabel}
                         </span>
                       </div>
 
                       {/* Missing */}
-                      <div className="bg-white border border-slate-200 rounded-lg p-2 text-center shadow-2xs">
-                        <span className="text-[10px] uppercase font-bold text-slate-500 block mb-0.5">
+                      <div className="bg-white border border-slate-200 rounded-lg p-1.5 sm:p-2 text-center shadow-2xs">
+                        <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-500 block mb-0.5">
                           Missing
                         </span>
                         <span
-                          className={`text-sm font-bold ${
+                          className={`text-xs sm:text-sm font-bold ${
                             res.missing !== null
                               ? res.missing > 0
                                 ? 'text-[#E60000]'
@@ -464,14 +470,14 @@ export function CommissionMatrix({ input, result, onChange }: CommissionMatrixPr
                             res.missing > 0 ? (
                               `-${res.missing.toLocaleString()}`
                             ) : (
-                              isExceeded ? '✓ Target Met' : '0'
+                              isExceeded ? '✓ Met' : '0'
                             )
                           ) : (
                             '—'
                           )}
                         </span>
                         {res.missing !== null && (
-                          <span className="text-[10px] text-slate-400 block">
+                          <span className="text-[9px] sm:text-[10px] text-slate-400 block">
                             {col.unit}
                           </span>
                         )}
@@ -484,41 +490,41 @@ export function CommissionMatrix({ input, result, onChange }: CommissionMatrixPr
 
             {/* Parent Categories Summary Sub-Row with Distinct Category Color Themes */}
             <tr className="border-t-2 border-slate-200 bg-slate-50 text-xs">
-              <td className="p-3 font-bold text-slate-700 border-r border-slate-200 text-center bg-slate-100/70">
+              <td className="p-2 sm:p-3 font-bold text-slate-700 border-r border-slate-200 text-center bg-slate-100 sticky left-0 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                 Category Total
               </td>
               {/* Voice / Acquisition Total */}
-              <td className="p-2.5 text-center border-r border-slate-200 bg-red-50/70 font-bold">
-                <div className="text-sm font-black text-[#E60000]">
+              <td className="p-2 sm:p-2.5 text-center border-r border-slate-200 bg-red-50/70 font-bold">
+                <div className="text-xs sm:text-sm font-black text-[#E60000]">
                   {formatPercentage(result.voice.contribution)}
                 </div>
-                <span className="text-[10px] text-red-700 font-semibold block">of 60%</span>
+                <span className="text-[9px] sm:text-[10px] text-red-700 font-semibold block">of 60%</span>
               </td>
               {/* Enterprise Combined Total */}
-              <td colSpan={2} className="p-2.5 text-center border-r border-slate-200 bg-indigo-50/70">
-                <div className="flex items-center justify-center gap-2">
-                  <span className="text-indigo-900 font-bold">Enterprise Total:</span>
-                  <span className="text-sm font-black text-indigo-700">
+              <td colSpan={2} className="p-2 sm:p-2.5 text-center border-r border-slate-200 bg-indigo-50/70">
+                <div className="flex items-center justify-center gap-1.5 sm:gap-2">
+                  <span className="text-indigo-900 font-bold text-xs">Enterprise:</span>
+                  <span className="text-xs sm:text-sm font-black text-indigo-700">
                     {formatPercentage(result.enterprise.totalContribution)}
                   </span>
-                  <span className="text-[10px] text-indigo-600 font-bold">(of 10%)</span>
+                  <span className="text-[9px] sm:text-[10px] text-indigo-600 font-bold">(10%)</span>
                 </div>
               </td>
               {/* Terminal Total */}
-              <td className="p-2.5 text-center border-r border-slate-200 bg-amber-50/70 font-bold">
-                <div className="text-sm font-black text-amber-700">
+              <td className="p-2 sm:p-2.5 text-center border-r border-slate-200 bg-amber-50/70 font-bold">
+                <div className="text-xs sm:text-sm font-black text-amber-700">
                   {formatPercentage(result.terminal.contribution)}
                 </div>
-                <span className="text-[10px] text-amber-800 font-semibold block">of 10%</span>
+                <span className="text-[9px] sm:text-[10px] text-amber-800 font-semibold block">of 10%</span>
               </td>
               {/* Fixed Combined Total */}
-              <td colSpan={2} className="p-2.5 text-center bg-emerald-50/70">
-                <div className="flex items-center justify-center gap-2">
-                  <span className="text-emerald-900 font-bold">Fixed Total:</span>
-                  <span className="text-sm font-black text-emerald-700">
+              <td colSpan={2} className="p-2 sm:p-2.5 text-center bg-emerald-50/70">
+                <div className="flex items-center justify-center gap-1.5 sm:gap-2">
+                  <span className="text-emerald-900 font-bold text-xs">Fixed:</span>
+                  <span className="text-xs sm:text-sm font-black text-emerald-700">
                     {formatPercentage(result.fixed.totalContribution)}
                   </span>
-                  <span className="text-[10px] text-emerald-700 font-bold">(of 20%)</span>
+                  <span className="text-[9px] sm:text-[10px] text-emerald-700 font-bold">(20%)</span>
                 </div>
               </td>
             </tr>
