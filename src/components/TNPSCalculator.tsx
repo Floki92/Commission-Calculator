@@ -52,9 +52,9 @@ export function TNPSCalculator() {
   const totalInputId = useId();
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex flex-col justify-between h-full">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 lg:p-6 flex flex-col justify-between h-full">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-2">
+      <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 sm:pb-3 mb-2.5 sm:mb-3">
         <div>
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-[#E60000]"></span>
@@ -78,7 +78,7 @@ export function TNPSCalculator() {
       </div>
 
       {/* 4 Inputs Grid: Promoters, Passive, Detractors, Total */}
-      <div className="grid grid-cols-4 gap-2 mb-3">
+      <div className="grid grid-cols-4 gap-2 mb-3 sm:mb-4">
         {/* Promoters */}
         <div className="flex flex-col">
           <label htmlFor={pInputId} className="text-[11px] font-bold text-emerald-700 mb-1 flex items-center gap-1 truncate">

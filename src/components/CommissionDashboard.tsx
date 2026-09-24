@@ -205,12 +205,12 @@ export function CommissionDashboard() {
           </div>
 
           {/* EXECUTIVE KPI & TNPS BAR (Top Grid) */}
-          <section aria-labelledby="executive-summary" className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <section aria-labelledby="executive-summary" className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 lg:gap-6">
             
             {/* Main KPI Card in Vodafone Red Palette (7 cols on lg) */}
-            <div className="commission-summary-card lg:col-span-7 bg-gradient-to-br from-[#E60000] via-[#CC0000] to-[#990000] rounded-2xl shadow-md p-5 sm:p-6 text-white flex flex-col justify-between relative overflow-hidden">
+            <div className="commission-summary-card lg:col-span-7 bg-gradient-to-br from-[#E60000] via-[#CC0000] to-[#990000] rounded-2xl shadow-md p-4 sm:p-5 lg:p-6 text-white flex flex-col justify-between relative overflow-hidden transition-all">
               <div className="relative z-10">
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
                   <span className="text-xs font-bold uppercase tracking-wider text-white/90 bg-black/20 px-2.5 py-1 rounded-md border border-white/20">
                     Overall Commission Achievement
                   </span>
@@ -229,7 +229,7 @@ export function CommissionDashboard() {
                   </div>
                 </div>
 
-                <div className="flex items-baseline gap-3 my-2">
+                <div className="flex items-baseline gap-3 my-2 sm:my-3">
                   <div className="text-4xl sm:text-5xl font-black tracking-tight text-white">
                     {formatPercentage(result.overall.achievement)}
                   </div>
@@ -244,9 +244,9 @@ export function CommissionDashboard() {
               </div>
 
               {/* Category breakdown boxes - Clean neutral styling without individual theme colors */}
-              <div className="relative z-10 pt-4 mt-2 border-t border-white/20 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <div className="relative z-10 pt-3 sm:pt-4 mt-3 sm:mt-4 border-t border-white/20 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5 text-xs">
                 {/* Acquisition */}
-                <div className="bg-black/20 hover:bg-black/30 rounded-xl p-2.5 border border-white/15 shadow-xs transition-colors backdrop-blur-xs">
+                <div className="bg-black/20 hover:bg-black/30 rounded-xl p-2 sm:p-2.5 border border-white/15 shadow-xs transition-colors backdrop-blur-xs">
                   <div className="flex items-center gap-1.5 text-white/80 text-[10px] font-bold">
                     <Zap className="w-3 h-3 text-white/80 shrink-0" />
                     <span>Acquisition (60%)</span>
@@ -255,7 +255,7 @@ export function CommissionDashboard() {
                 </div>
 
                 {/* Enterprise */}
-                <div className="bg-black/20 hover:bg-black/30 rounded-xl p-2.5 border border-white/15 shadow-xs transition-colors backdrop-blur-xs">
+                <div className="bg-black/20 hover:bg-black/30 rounded-xl p-2 sm:p-2.5 border border-white/15 shadow-xs transition-colors backdrop-blur-xs">
                   <div className="flex items-center gap-1.5 text-white/80 text-[10px] font-bold">
                     <Building2 className="w-3 h-3 text-white/80 shrink-0" />
                     <span>Enterprise (10%)</span>
@@ -264,7 +264,7 @@ export function CommissionDashboard() {
                 </div>
 
                 {/* Terminal */}
-                <div className="bg-black/20 hover:bg-black/30 rounded-xl p-2.5 border border-white/15 shadow-xs transition-colors backdrop-blur-xs">
+                <div className="bg-black/20 hover:bg-black/30 rounded-xl p-2 sm:p-2.5 border border-white/15 shadow-xs transition-colors backdrop-blur-xs">
                   <div className="flex items-center gap-1.5 text-white/80 text-[10px] font-bold">
                     <Smartphone className="w-3 h-3 text-white/80 shrink-0" />
                     <span>Terminal (10%)</span>
@@ -273,7 +273,7 @@ export function CommissionDashboard() {
                 </div>
 
                 {/* Fixed */}
-                <div className="bg-black/20 hover:bg-black/30 rounded-xl p-2.5 border border-white/15 shadow-xs transition-colors backdrop-blur-xs">
+                <div className="bg-black/20 hover:bg-black/30 rounded-xl p-2 sm:p-2.5 border border-white/15 shadow-xs transition-colors backdrop-blur-xs">
                   <div className="flex items-center gap-1.5 text-white/80 text-[10px] font-bold">
                     <Wifi className="w-3 h-3 text-white/80 shrink-0" />
                     <span>Fixed (20%)</span>
