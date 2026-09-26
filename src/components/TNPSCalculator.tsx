@@ -112,17 +112,18 @@ export function TNPSCalculator() {
         </div>
       </div>
 
-      {/* 4 Inputs Grid: Promoters, Passive, Detractors, Total */}
-      <div className="grid grid-cols-4 gap-1.5 sm:gap-2 mb-2.5 sm:mb-4">
+      {/* 4 Inputs Grid: Promoters, Passive, Detractors, Total - 2x2 on mobile, 4 cols on sm+ */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2 mb-2.5 sm:mb-4">
         {/* Promoters */}
         <div className="flex flex-col">
-          <label htmlFor={pInputId} className="text-[10px] sm:text-[11px] font-bold text-emerald-700 mb-0.5 sm:mb-1 flex items-center gap-1 truncate">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+          <label htmlFor={pInputId} className="text-[11px] font-bold text-emerald-700 mb-1 flex items-center gap-1 truncate">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
             <span className="truncate">Promoters</span>
           </label>
           <input
             id={pInputId}
             type="number"
+            inputMode="decimal"
             min="0"
             step="any"
             placeholder="0"
@@ -131,7 +132,7 @@ export function TNPSCalculator() {
               const val = e.target.value === '' ? null : Number(e.target.value);
               setValues((prev) => ({ ...prev, promoters: val }));
             }}
-            className="w-full text-center px-1.5 sm:px-2 py-1.5 text-xs font-bold rounded-lg border border-emerald-200 bg-emerald-50/30 text-emerald-950 focus:outline-none focus:ring-2 focus:ring-emerald-500 print:hidden export-hide-input"
+            className="w-full text-center px-2 py-2 text-sm sm:text-xs font-bold rounded-lg border border-emerald-200 bg-emerald-50/30 text-emerald-950 focus:outline-none focus:ring-2 focus:ring-emerald-500 print:hidden export-hide-input min-h-[40px] sm:min-h-0"
           />
           <div className="hidden print:flex export-show-text items-center justify-center font-bold text-xs py-1.5 px-2 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-950 min-h-[32px]">
             {values.promoters !== null ? values.promoters : <span className="text-emerald-400 font-normal">0</span>}
@@ -140,13 +141,14 @@ export function TNPSCalculator() {
 
         {/* Passive */}
         <div className="flex flex-col">
-          <label htmlFor={passInputId} className="text-[10px] sm:text-[11px] font-bold text-amber-700 mb-0.5 sm:mb-1 flex items-center gap-1 truncate">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
+          <label htmlFor={passInputId} className="text-[11px] font-bold text-amber-700 mb-1 flex items-center gap-1 truncate">
+            <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span>
             <span className="truncate">Passive</span>
           </label>
           <input
             id={passInputId}
             type="number"
+            inputMode="decimal"
             min="0"
             step="any"
             placeholder="0"
@@ -155,7 +157,7 @@ export function TNPSCalculator() {
               const val = e.target.value === '' ? null : Number(e.target.value);
               setValues((prev) => ({ ...prev, passive: val }));
             }}
-            className="w-full text-center px-1.5 sm:px-2 py-1.5 text-xs font-bold rounded-lg border border-amber-200 bg-amber-50/30 text-amber-950 focus:outline-none focus:ring-2 focus:ring-amber-500 print:hidden export-hide-input"
+            className="w-full text-center px-2 py-2 text-sm sm:text-xs font-bold rounded-lg border border-amber-200 bg-amber-50/30 text-amber-950 focus:outline-none focus:ring-2 focus:ring-amber-500 print:hidden export-hide-input min-h-[40px] sm:min-h-0"
           />
           <div className="hidden print:flex export-show-text items-center justify-center font-bold text-xs py-1.5 px-2 rounded-lg border border-amber-200 bg-amber-50 text-amber-950 min-h-[32px]">
             {values.passive !== null ? values.passive : <span className="text-amber-400 font-normal">0</span>}
@@ -164,13 +166,14 @@ export function TNPSCalculator() {
 
         {/* Detractors */}
         <div className="flex flex-col">
-          <label htmlFor={dInputId} className="text-[10px] sm:text-[11px] font-bold text-[#E60000] mb-0.5 sm:mb-1 flex items-center gap-1 truncate">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#E60000] shrink-0"></span>
+          <label htmlFor={dInputId} className="text-[11px] font-bold text-[#E60000] mb-1 flex items-center gap-1 truncate">
+            <span className="w-2 h-2 rounded-full bg-[#E60000] shrink-0"></span>
             <span className="truncate">Detractors</span>
           </label>
           <input
             id={dInputId}
             type="number"
+            inputMode="decimal"
             min="0"
             step="any"
             placeholder="0"
@@ -179,7 +182,7 @@ export function TNPSCalculator() {
               const val = e.target.value === '' ? null : Number(e.target.value);
               setValues((prev) => ({ ...prev, detractors: val }));
             }}
-            className="w-full text-center px-1.5 sm:px-2 py-1.5 text-xs font-bold rounded-lg border border-red-200 bg-red-50/30 text-red-950 focus:outline-none focus:ring-2 focus:ring-[#E60000] print:hidden export-hide-input"
+            className="w-full text-center px-2 py-2 text-sm sm:text-xs font-bold rounded-lg border border-red-200 bg-red-50/30 text-red-950 focus:outline-none focus:ring-2 focus:ring-[#E60000] print:hidden export-hide-input min-h-[40px] sm:min-h-0"
           />
           <div className="hidden print:flex export-show-text items-center justify-center font-bold text-xs py-1.5 px-2 rounded-lg border border-red-200 bg-red-50 text-red-950 min-h-[32px]">
             {values.detractors !== null ? values.detractors : <span className="text-red-400 font-normal">0</span>}
@@ -188,8 +191,8 @@ export function TNPSCalculator() {
 
         {/* Total (Sum of 3 or custom) */}
         <div className="flex flex-col">
-          <label htmlFor={totalInputId} className="text-[10px] sm:text-[11px] font-bold text-slate-700 mb-0.5 sm:mb-1 flex items-center justify-between truncate">
-            <span className="truncate">Total (3)</span>
+          <label htmlFor={totalInputId} className="text-[11px] font-bold text-slate-700 mb-1 flex items-center justify-between truncate">
+            <span className="truncate">Total Responses</span>
             {values.customTotal !== null && (
               <span className="text-[9px] text-slate-400 font-normal print:hidden export-hide-input">custom</span>
             )}
@@ -197,6 +200,7 @@ export function TNPSCalculator() {
           <input
             id={totalInputId}
             type="number"
+            inputMode="decimal"
             min="0"
             step="any"
             placeholder={autoTotal !== null ? String(autoTotal) : '0'}
@@ -205,7 +209,7 @@ export function TNPSCalculator() {
               const val = e.target.value === '' ? null : Number(e.target.value);
               setValues((prev) => ({ ...prev, customTotal: val }));
             }}
-            className="w-full text-center px-1.5 sm:px-2 py-1.5 text-xs font-bold rounded-lg border border-slate-300 bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-500 print:hidden export-hide-input"
+            className="w-full text-center px-2 py-2 text-sm sm:text-xs font-bold rounded-lg border border-slate-300 bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-500 print:hidden export-hide-input min-h-[40px] sm:min-h-0"
           />
           <div className="hidden print:flex export-show-text items-center justify-center font-bold text-xs py-1.5 px-2 rounded-lg border border-slate-300 bg-slate-50 text-slate-900 min-h-[32px]">
             {total !== null ? total : <span className="text-slate-400 font-normal">0</span>}

@@ -1,13 +1,16 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { CommissionInput, CommissionResult, ComponentInput } from '../features/commission/commission.types';
 import { COMMISSION_WEIGHTS, UNITS } from '../features/commission/commission.constants';
 import { formatPercentage } from '../features/commission/commission.utils';
-import { Zap, Building2, Smartphone, Wifi, Layers, Boxes } from 'lucide-react';
+import { Zap, Building2, Smartphone, Wifi, Layers, Boxes, Sigma } from 'lucide-react';
+import { NewsTickerNote } from './NewsTickerNote';
 
-interface CommissionMatrixProps {
+export interface CommissionMatrixProps {
   input: CommissionInput;
   result: CommissionResult;
   onChange: (updater: (prev: CommissionInput) => CommissionInput) => void;
+  acqNote: string;
+  onAcqNoteChange: (val: string) => void;
 }
 
 interface ColumnTheme {
@@ -23,7 +26,7 @@ interface ColumnTheme {
   contribText: string;
 }
 
-interface ColumnConfig {
+export interface ColumnConfig {
   id: string;
   category: string;
   categoryWeight: string;
@@ -32,184 +35,422 @@ interface ColumnConfig {
   weightLabel: string;
   unit: string;
   theme: ColumnTheme;
+  isSubBox?: boolean;
+  isSummary?: boolean;
   getter: (input: CommissionInput) => ComponentInput;
-  setter: (prev: CommissionInput, val: ComponentInput) => CommissionInput;
+  setter?: (prev: CommissionInput, val: ComponentInput) => CommissionInput;
   resultGetter: (result: CommissionResult) => { achievement: number | null; contribution: number | null; missing: number | null };
 }
 
-export function CommissionMatrix({ input, result, onChange }: CommissionMatrixProps) {
-  const columns: ColumnConfig[] = [
-    {
-      id: 'voice',
-      category: 'Acquisition',
-      categoryWeight: '60%',
-      subTitle: 'Acq Points',
-      weight: COMMISSION_WEIGHTS.VOICE,
-      weightLabel: '60%',
-      unit: UNITS.VOICE,
-      theme: {
-        accentDot: 'bg-[#E60000]',
-        subHeaderBg: 'bg-red-50/50 hover:bg-red-50/70 border-t-2 border-t-red-400',
-        titleColor: 'text-red-950',
-        badgeBg: 'bg-red-100',
-        badgeText: 'text-[#E60000]',
-        unitColor: 'text-red-700/80',
-        focusRing: 'focus:ring-[#E60000] focus:border-[#E60000]',
-        contribBg: 'bg-red-50/90',
-        contribBorder: 'border-red-200',
-        contribText: 'text-[#E60000]',
-      },
-      getter: (inp) => inp.voice,
-      setter: (prev, val) => ({ ...prev, voice: val }),
-      resultGetter: (res) => res.voice,
+// Static columns definition - created ONCE, avoiding garbage collection overhead on every render
+export const MATRIX_COLUMNS: ColumnConfig[] = [
+  // --- ACQUISITION: 3 SUB-BOXES (Low, High, Cash) + 1 TOTAL ACQUISITION BOX ---
+  {
+    id: 'acq-low',
+    category: 'Acquisition',
+    categoryWeight: '60%',
+    subTitle: 'Low',
+    weight: 0,
+    weightLabel: '',
+    unit: UNITS.ACQUISITION_LOW,
+    isSubBox: true,
+    theme: {
+      accentDot: 'bg-rose-500',
+      subHeaderBg: 'bg-rose-50/50 hover:bg-rose-50/70 border-t-2 border-t-rose-400',
+      titleColor: 'text-rose-950',
+      badgeBg: 'bg-rose-100',
+      badgeText: 'text-rose-700',
+      unitColor: 'text-rose-700/80',
+      focusRing: 'focus:ring-rose-500 focus:border-rose-500',
+      contribBg: 'bg-rose-50/90',
+      contribBorder: 'border-rose-200',
+      contribText: 'text-rose-700',
     },
-    {
-      id: 'ent-accounts',
-      category: 'Enterprise',
-      categoryWeight: '10%',
-      subTitle: 'Accounts',
-      weight: COMMISSION_WEIGHTS.ENTERPRISE_ACCOUNTS,
-      weightLabel: '5%',
-      unit: UNITS.ENTERPRISE_ACCOUNTS,
-      theme: {
-        accentDot: 'bg-indigo-600',
-        subHeaderBg: 'bg-indigo-50/50 hover:bg-indigo-50/70 border-t-2 border-t-indigo-400',
-        titleColor: 'text-indigo-950',
-        badgeBg: 'bg-indigo-100',
-        badgeText: 'text-indigo-700',
-        unitColor: 'text-indigo-700/80',
-        focusRing: 'focus:ring-indigo-500 focus:border-indigo-500',
-        contribBg: 'bg-indigo-50/90',
-        contribBorder: 'border-indigo-200',
-        contribText: 'text-indigo-700',
-      },
-      getter: (inp) => inp.enterprise.accounts,
-      setter: (prev, val) => ({
-        ...prev,
-        enterprise: { ...prev.enterprise, accounts: val },
-      }),
-      resultGetter: (res) => res.enterprise.accounts,
+    getter: (inp) => inp.acquisition.low,
+    setter: (prev, val) => ({
+      ...prev,
+      acquisition: { ...prev.acquisition, low: val },
+    }),
+    resultGetter: (res) => res.acquisition.low,
+  },
+  {
+    id: 'acq-high',
+    category: 'Acquisition',
+    categoryWeight: '60%',
+    subTitle: 'High',
+    weight: 0,
+    weightLabel: '',
+    unit: UNITS.ACQUISITION_HIGH,
+    isSubBox: true,
+    theme: {
+      accentDot: 'bg-red-600',
+      subHeaderBg: 'bg-red-50/50 hover:bg-red-50/70 border-t-2 border-t-red-500',
+      titleColor: 'text-red-950',
+      badgeBg: 'bg-red-100',
+      badgeText: 'text-red-700',
+      unitColor: 'text-red-700/80',
+      focusRing: 'focus:ring-red-500 focus:border-red-500',
+      contribBg: 'bg-red-50/90',
+      contribBorder: 'border-red-200',
+      contribText: 'text-red-700',
     },
-    {
-      id: 'ent-lines',
-      category: 'Enterprise',
-      categoryWeight: '10%',
-      subTitle: 'Lines',
-      weight: COMMISSION_WEIGHTS.ENTERPRISE_LINES,
-      weightLabel: '5%',
-      unit: UNITS.ENTERPRISE_LINES,
-      theme: {
-        accentDot: 'bg-blue-600',
-        subHeaderBg: 'bg-blue-50/50 hover:bg-blue-50/70 border-t-2 border-t-blue-400',
-        titleColor: 'text-blue-950',
-        badgeBg: 'bg-blue-100',
-        badgeText: 'text-blue-700',
-        unitColor: 'text-blue-700/80',
-        focusRing: 'focus:ring-blue-500 focus:border-blue-500',
-        contribBg: 'bg-blue-50/90',
-        contribBorder: 'border-blue-200',
-        contribText: 'text-blue-700',
-      },
-      getter: (inp) => inp.enterprise.lines,
-      setter: (prev, val) => ({
-        ...prev,
-        enterprise: { ...prev.enterprise, lines: val },
-      }),
-      resultGetter: (res) => res.enterprise.lines,
+    getter: (inp) => inp.acquisition.high,
+    setter: (prev, val) => ({
+      ...prev,
+      acquisition: { ...prev.acquisition, high: val },
+    }),
+    resultGetter: (res) => res.acquisition.high,
+  },
+  {
+    id: 'acq-cash',
+    category: 'Acquisition',
+    categoryWeight: '60%',
+    subTitle: 'Cash',
+    weight: 0,
+    weightLabel: '',
+    unit: UNITS.ACQUISITION_CASH,
+    isSubBox: true,
+    theme: {
+      accentDot: 'bg-orange-600',
+      subHeaderBg: 'bg-orange-50/50 hover:bg-orange-50/70 border-t-2 border-t-orange-400',
+      titleColor: 'text-orange-950',
+      badgeBg: 'bg-orange-100',
+      badgeText: 'text-orange-800',
+      unitColor: 'text-orange-800/80',
+      focusRing: 'focus:ring-orange-500 focus:border-orange-500',
+      contribBg: 'bg-orange-50/90',
+      contribBorder: 'border-orange-200',
+      contribText: 'text-orange-700',
     },
-    {
-      id: 'terminal',
-      category: 'Terminal',
-      categoryWeight: '10%',
-      subTitle: 'Sales Value',
-      weight: COMMISSION_WEIGHTS.TERMINAL,
-      weightLabel: '10%',
-      unit: UNITS.TERMINAL,
-      theme: {
-        accentDot: 'bg-amber-600',
-        subHeaderBg: 'bg-amber-50/50 hover:bg-amber-50/70 border-t-2 border-t-amber-400',
-        titleColor: 'text-amber-950',
-        badgeBg: 'bg-amber-100',
-        badgeText: 'text-amber-800',
-        unitColor: 'text-amber-800/80',
-        focusRing: 'focus:ring-amber-500 focus:border-amber-500',
-        contribBg: 'bg-amber-50/90',
-        contribBorder: 'border-amber-200',
-        contribText: 'text-amber-700',
-      },
-      getter: (inp) => inp.terminal,
-      setter: (prev, val) => ({ ...prev, terminal: val }),
-      resultGetter: (res) => res.terminal,
+    getter: (inp) => inp.acquisition.cash,
+    setter: (prev, val) => ({
+      ...prev,
+      acquisition: { ...prev.acquisition, cash: val },
+    }),
+    resultGetter: (res) => res.acquisition.cash,
+  },
+  {
+    id: 'acq-total',
+    category: 'Acquisition',
+    categoryWeight: '60%',
+    subTitle: 'Total Acq',
+    weight: COMMISSION_WEIGHTS.ACQUISITION,
+    weightLabel: 'Sum 60%',
+    unit: UNITS.ACQUISITION_TOTAL,
+    isSummary: true,
+    theme: {
+      accentDot: 'bg-[#E60000]',
+      subHeaderBg: 'bg-gradient-to-b from-red-100/90 via-red-50/90 to-red-50/70 border-t-2 border-t-[#E60000]',
+      titleColor: 'text-red-950 font-black',
+      badgeBg: 'bg-[#E60000]',
+      badgeText: 'text-white',
+      unitColor: 'text-red-700/90',
+      focusRing: 'focus:ring-[#E60000] focus:border-[#E60000]',
+      contribBg: 'bg-red-100',
+      contribBorder: 'border-red-300',
+      contribText: 'text-[#E60000]',
     },
-    {
-      id: 'fixed-dsl',
-      category: 'Fixed',
-      categoryWeight: '20%',
-      subTitle: 'DSL',
-      weight: COMMISSION_WEIGHTS.DSL,
-      weightLabel: '16%',
-      unit: UNITS.DSL,
-      theme: {
-        accentDot: 'bg-emerald-600',
-        subHeaderBg: 'bg-emerald-50/50 hover:bg-emerald-50/70 border-t-2 border-t-emerald-400',
-        titleColor: 'text-emerald-950',
-        badgeBg: 'bg-emerald-100',
-        badgeText: 'text-emerald-800',
-        unitColor: 'text-emerald-800/80',
-        focusRing: 'focus:ring-emerald-500 focus:border-emerald-500',
-        contribBg: 'bg-emerald-50/90',
-        contribBorder: 'border-emerald-200',
-        contribText: 'text-emerald-700',
-      },
-      getter: (inp) => inp.fixed.dsl,
-      setter: (prev, val) => ({
-        ...prev,
-        fixed: { ...prev.fixed, dsl: val },
-      }),
-      resultGetter: (res) => res.fixed.dsl,
-    },
-    {
-      id: 'fixed-conn',
-      category: 'Fixed',
-      categoryWeight: '20%',
-      subTitle: 'Connectivity',
-      weight: COMMISSION_WEIGHTS.CONNECTIVITY,
-      weightLabel: '4%',
-      unit: UNITS.CONNECTIVITY,
-      theme: {
-        accentDot: 'bg-teal-600',
-        subHeaderBg: 'bg-teal-50/50 hover:bg-teal-50/70 border-t-2 border-t-teal-400',
-        titleColor: 'text-teal-950',
-        badgeBg: 'bg-teal-100',
-        badgeText: 'text-teal-800',
-        unitColor: 'text-teal-800/80',
-        focusRing: 'focus:ring-teal-500 focus:border-teal-500',
-        contribBg: 'bg-teal-50/90',
-        contribBorder: 'border-teal-200',
-        contribText: 'text-teal-700',
-      },
-      getter: (inp) => inp.fixed.connectivity,
-      setter: (prev, val) => ({
-        ...prev,
-        fixed: { ...prev.fixed, connectivity: val },
-      }),
-      resultGetter: (res) => res.fixed.connectivity,
-    },
-  ];
+    getter: (inp) => ({
+      target: ((inp.acquisition.low.target ?? 0) + (inp.acquisition.high.target ?? 0) + (inp.acquisition.cash.target ?? 0)) || null,
+      actual: ((inp.acquisition.low.actual ?? 0) + (inp.acquisition.high.actual ?? 0) + (inp.acquisition.cash.actual ?? 0)) || null,
+    }),
+    resultGetter: (res) => res.acquisition.total,
+  },
 
-  const handleTargetChange = (col: ColumnConfig, rawValue: string) => {
-    const target = rawValue === '' ? null : Number(rawValue);
+  // --- ENTERPRISE: 2 SUB-COLUMNS (Accounts 5%, Lines 5%) ---
+  {
+    id: 'ent-accounts',
+    category: 'Enterprise',
+    categoryWeight: '10%',
+    subTitle: 'Accounts',
+    weight: COMMISSION_WEIGHTS.ENTERPRISE_ACCOUNTS,
+    weightLabel: '5%',
+    unit: UNITS.ENTERPRISE_ACCOUNTS,
+    theme: {
+      accentDot: 'bg-indigo-600',
+      subHeaderBg: 'bg-indigo-50/50 hover:bg-indigo-50/70 border-t-2 border-t-indigo-400',
+      titleColor: 'text-indigo-950',
+      badgeBg: 'bg-indigo-100',
+      badgeText: 'text-indigo-700',
+      unitColor: 'text-indigo-700/80',
+      focusRing: 'focus:ring-indigo-500 focus:border-indigo-500',
+      contribBg: 'bg-indigo-50/90',
+      contribBorder: 'border-indigo-200',
+      contribText: 'text-indigo-700',
+    },
+    getter: (inp) => inp.enterprise.accounts,
+    setter: (prev, val) => ({
+      ...prev,
+      enterprise: { ...prev.enterprise, accounts: val },
+    }),
+    resultGetter: (res) => res.enterprise.accounts,
+  },
+  {
+    id: 'ent-lines',
+    category: 'Enterprise',
+    categoryWeight: '10%',
+    subTitle: 'Lines',
+    weight: COMMISSION_WEIGHTS.ENTERPRISE_LINES,
+    weightLabel: '5%',
+    unit: UNITS.ENTERPRISE_LINES,
+    theme: {
+      accentDot: 'bg-blue-600',
+      subHeaderBg: 'bg-blue-50/50 hover:bg-blue-50/70 border-t-2 border-t-blue-400',
+      titleColor: 'text-blue-950',
+      badgeBg: 'bg-blue-100',
+      badgeText: 'text-blue-700',
+      unitColor: 'text-blue-700/80',
+      focusRing: 'focus:ring-blue-500 focus:border-blue-500',
+      contribBg: 'bg-blue-50/90',
+      contribBorder: 'border-blue-200',
+      contribText: 'text-blue-700',
+    },
+    getter: (inp) => inp.enterprise.lines,
+    setter: (prev, val) => ({
+      ...prev,
+      enterprise: { ...prev.enterprise, lines: val },
+    }),
+    resultGetter: (res) => res.enterprise.lines,
+  },
+
+  // --- TERMINAL: 1 COLUMN (10%) ---
+  {
+    id: 'terminal',
+    category: 'Terminal',
+    categoryWeight: '10%',
+    subTitle: 'Sales Value',
+    weight: COMMISSION_WEIGHTS.TERMINAL,
+    weightLabel: '10%',
+    unit: UNITS.TERMINAL,
+    theme: {
+      accentDot: 'bg-amber-600',
+      subHeaderBg: 'bg-amber-50/50 hover:bg-amber-50/70 border-t-2 border-t-amber-400',
+      titleColor: 'text-amber-950',
+      badgeBg: 'bg-amber-100',
+      badgeText: 'text-amber-800',
+      unitColor: 'text-amber-800/80',
+      focusRing: 'focus:ring-amber-500 focus:border-amber-500',
+      contribBg: 'bg-amber-50/90',
+      contribBorder: 'border-amber-200',
+      contribText: 'text-amber-700',
+    },
+    getter: (inp) => inp.terminal,
+    setter: (prev, val) => ({ ...prev, terminal: val }),
+    resultGetter: (res) => res.terminal,
+  },
+
+  // --- FIXED: 2 SUB-COLUMNS (DSL 16%, Connectivity 4%) ---
+  {
+    id: 'fixed-dsl',
+    category: 'Fixed',
+    categoryWeight: '20%',
+    subTitle: 'DSL',
+    weight: COMMISSION_WEIGHTS.DSL,
+    weightLabel: '16%',
+    unit: UNITS.DSL,
+    theme: {
+      accentDot: 'bg-emerald-600',
+      subHeaderBg: 'bg-emerald-50/50 hover:bg-emerald-50/70 border-t-2 border-t-emerald-400',
+      titleColor: 'text-emerald-950',
+      badgeBg: 'bg-emerald-100',
+      badgeText: 'text-emerald-800',
+      unitColor: 'text-emerald-800/80',
+      focusRing: 'focus:ring-emerald-500 focus:border-emerald-500',
+      contribBg: 'bg-emerald-50/90',
+      contribBorder: 'border-emerald-200',
+      contribText: 'text-emerald-700',
+    },
+    getter: (inp) => inp.fixed.dsl,
+    setter: (prev, val) => ({
+      ...prev,
+      fixed: { ...prev.fixed, dsl: val },
+    }),
+    resultGetter: (res) => res.fixed.dsl,
+  },
+  {
+    id: 'fixed-conn',
+    category: 'Fixed',
+    categoryWeight: '20%',
+    subTitle: 'Connectivity',
+    weight: COMMISSION_WEIGHTS.CONNECTIVITY,
+    weightLabel: '4%',
+    unit: UNITS.CONNECTIVITY,
+    theme: {
+      accentDot: 'bg-teal-600',
+      subHeaderBg: 'bg-teal-50/50 hover:bg-teal-50/70 border-t-2 border-t-teal-400',
+      titleColor: 'text-teal-950',
+      badgeBg: 'bg-teal-100',
+      badgeText: 'text-teal-800',
+      unitColor: 'text-teal-800/80',
+      focusRing: 'focus:ring-teal-500 focus:border-teal-500',
+      contribBg: 'bg-teal-50/90',
+      contribBorder: 'border-teal-200',
+      contribText: 'text-teal-700',
+    },
+    getter: (inp) => inp.fixed.connectivity,
+    setter: (prev, val) => ({
+      ...prev,
+      fixed: { ...prev.fixed, connectivity: val },
+    }),
+    resultGetter: (res) => res.fixed.connectivity,
+  },
+];
+
+/**
+ * Reusable Matrix Input Cell for Row 1 (Target) & Row 2 (Actual).
+ * Eliminates redundant input JSX, print elements, and validation logic.
+ */
+interface MatrixInputCellProps {
+  col: ColumnConfig;
+  value: number | null;
+  onChange?: (val: string) => void;
+  summaryValue?: number | null;
+  isTarget?: boolean;
+}
+
+const MatrixInputCell = React.memo(function MatrixInputCell({
+  col,
+  value,
+  onChange,
+  summaryValue,
+  isTarget = false,
+}: MatrixInputCellProps) {
+  if (col.isSummary) {
+    return (
+      <td className="p-2 sm:p-2.5 border-r border-slate-200 align-top bg-red-50/40">
+        <div className="flex flex-col items-center justify-center p-1.5 sm:p-2 bg-gradient-to-b from-red-100/90 to-red-50/80 border border-red-300 rounded-lg text-center shadow-2xs min-h-[58px] sm:min-h-[64px]">
+          <div className="text-sm sm:text-base font-black text-red-950">
+            {summaryValue !== null && summaryValue !== undefined ? (
+              summaryValue.toLocaleString()
+            ) : (
+              <span className="text-slate-400 font-normal">0</span>
+            )}
+          </div>
+          <span className="text-[10px] text-red-700/80 font-medium">{col.unit}</span>
+        </div>
+      </td>
+    );
+  }
+
+  const isZero = isTarget && value === 0;
+  const isNegative = value !== null && value < 0;
+
+  return (
+    <td className="p-2 sm:p-2.5 border-r last:border-r-0 border-slate-200 align-top">
+      <div className="relative">
+        <input
+          type="number"
+          min="0"
+          step="any"
+          placeholder="0"
+          value={value ?? ''}
+          onChange={(e) => onChange?.(e.target.value)}
+          className={`w-full text-center px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg border transition-all focus:outline-none focus:ring-2 print:hidden export-hide-input ${
+            isZero || isNegative
+              ? 'border-red-500 bg-red-50/50 text-red-900 focus:ring-red-500'
+              : `border-slate-300 bg-white text-slate-900 ${col.theme.focusRing}`
+          }`}
+        />
+        <div className="hidden print:flex export-show-text items-center justify-center text-center font-bold text-xs sm:text-sm text-slate-900 py-1.5 px-2 bg-slate-50 border border-slate-300 rounded-lg min-h-[34px] sm:min-h-[38px]">
+          {value !== null ? value : <span className="text-slate-400 font-normal">0</span>}
+        </div>
+        <span className="block text-[10px] text-slate-400 text-center mt-0.5 sm:mt-1">
+          {col.unit}
+        </span>
+        {isZero && (
+          <span className="block text-[9px] sm:text-[10px] text-[#E60000] text-center font-semibold print:hidden export-hide-input">
+            Must be &gt; 0
+          </span>
+        )}
+      </div>
+    </td>
+  );
+});
+
+/**
+ * Reusable Matrix Percentage Cell for Row 3 (Percentages & Contributions).
+ */
+interface MatrixPercentageCellProps {
+  col: ColumnConfig;
+  res: { achievement: number | null; contribution: number | null; missing: number | null };
+}
+
+const MatrixPercentageCell = React.memo(function MatrixPercentageCell({
+  col,
+  res,
+}: MatrixPercentageCellProps) {
+  const isExceeded = res.missing === 0 && res.achievement !== null && res.achievement >= 100;
+
+  return (
+    <td className={`p-2 sm:p-3 border-r last:border-r-0 border-slate-200 align-top ${col.isSummary ? 'bg-red-50/40' : ''}`}>
+      <div className="flex flex-col gap-1.5 sm:gap-2">
+        {/* Achievement % */}
+        <div className="bg-white border border-slate-200 rounded-lg p-1.5 sm:p-2 text-center shadow-2xs">
+          <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-500 block mb-0.5">
+            {col.isSummary ? 'Total Acq %' : 'Achievement %'}
+          </span>
+          <span className="text-sm sm:text-base font-extrabold text-slate-900">
+            {formatPercentage(res.achievement)}
+          </span>
+        </div>
+
+        {/* Contribution % */}
+        {!col.isSubBox && (
+          <div className={`${col.theme.contribBg} border ${col.theme.contribBorder} rounded-lg p-1.5 sm:p-2 text-center shadow-2xs`}>
+            <span className={`text-[9px] sm:text-[10px] uppercase font-extrabold ${col.theme.contribText} block mb-0.5`}>
+              Contribution %
+            </span>
+            <span className={`text-sm sm:text-base font-extrabold ${col.theme.contribText}`}>
+              {formatPercentage(res.contribution)}
+            </span>
+            <span className="text-[9px] sm:text-[10px] text-slate-500 block mt-0.5 font-semibold">
+              of {col.weightLabel}
+            </span>
+          </div>
+        )}
+
+        {/* Missing */}
+        <div className="bg-white border border-slate-200 rounded-lg p-1.5 sm:p-2 text-center shadow-2xs">
+          <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-500 block mb-0.5">
+            Missing
+          </span>
+          <span
+            className={`text-xs sm:text-sm font-bold ${
+              res.missing !== null
+                ? res.missing > 0
+                  ? 'text-[#E60000]'
+                  : 'text-emerald-600'
+                : 'text-slate-400'
+            }`}
+          >
+            {res.missing !== null ? (
+              res.missing > 0 ? (
+                `-${res.missing.toLocaleString()}`
+              ) : (
+                isExceeded ? '✓ Met' : '0'
+              )
+            ) : (
+              '—'
+            )}
+          </span>
+          {res.missing !== null && (
+            <span className="text-[9px] sm:text-[10px] text-slate-400 block">
+              {col.unit}
+            </span>
+          )}
+        </div>
+      </div>
+    </td>
+  );
+});
+
+export function CommissionMatrix({ input, result, onChange, acqNote, onAcqNoteChange }: CommissionMatrixProps) {
+  const handleInputChange = (col: ColumnConfig, field: 'target' | 'actual', rawValue: string) => {
+    if (!col.setter) return;
+    const num = rawValue === '' ? null : Number(rawValue);
     onChange((prev) => {
       const current = col.getter(prev);
-      return col.setter(prev, { ...current, target });
-    });
-  };
-
-  const handleActualChange = (col: ColumnConfig, rawValue: string) => {
-    const actual = rawValue === '' ? null : Number(rawValue);
-    onChange((prev) => {
-      const current = col.getter(prev);
-      return col.setter(prev, { ...current, actual });
+      return col.setter!(prev, { ...current, [field]: num });
     });
   };
 
@@ -218,11 +459,13 @@ export function CommissionMatrix({ input, result, onChange }: CommissionMatrixPr
       {/* Mobile Swipe Hint Bar */}
       <div className="md:hidden flex items-center justify-between px-3 py-1.5 bg-slate-50 border-b border-slate-200 text-[11px] text-slate-500 font-medium">
         <span>Swipe horizontally to view all metrics</span>
-        <span className="text-[#E60000] font-semibold flex items-center gap-1">6 Components &rarr;</span>
+        <span className="text-[#E60000] font-semibold flex items-center gap-1">
+          Acquisition (3 Sub-Boxes + Sum) • 9 Columns &rarr;
+        </span>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse min-w-[760px] sm:min-w-[850px]">
+        <table className="w-full text-left border-collapse min-w-[950px] sm:min-w-[1100px]">
           {/* Header Row: Main Categories & Weights */}
           <thead>
             {/* Top Categories grouping */}
@@ -235,18 +478,27 @@ export function CommissionMatrix({ input, result, onChange }: CommissionMatrixPr
                 </div>
               </th>
 
-              {/* Acquisition Category Box (1 col) - Red theme */}
-              <th className="p-2.5 sm:p-3.5 text-center border-r border-slate-200 bg-gradient-to-b from-red-100/80 via-red-50/60 to-red-50/30 border-t-4 border-t-[#E60000]">
+              {/* Acquisition Category Box (Spans 4 columns: Low, High, Cash, Total) */}
+              <th colSpan={4} className="p-2 sm:p-2.5 text-center border-r border-slate-200 bg-gradient-to-b from-red-100/80 via-red-50/60 to-red-50/30 border-t-4 border-t-[#E60000]">
                 <div className="flex items-center justify-center gap-1.5 mb-1">
                   <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#E60000] shrink-0" />
                   <span className="font-black text-red-950 text-xs sm:text-sm tracking-tight">Acquisition</span>
+                  <span className="bg-[#E60000] text-white text-[9px] sm:text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow-2xs">
+                    Weight: 60%
+                  </span>
                 </div>
-                <div className="inline-flex items-center gap-1 bg-[#E60000] text-white font-extrabold text-[10px] sm:text-[11px] px-2 sm:px-2.5 py-0.5 rounded-full shadow-2xs">
-                  Weight: 60%
+                
+                {/* News Bar Marquee Note moving from Right to Left */}
+                <div className="mt-1 flex items-center justify-center">
+                  <NewsTickerNote
+                    note={acqNote}
+                    onNoteChange={onAcqNoteChange}
+                    className="w-full max-w-[480px]"
+                  />
                 </div>
               </th>
 
-              {/* Enterprise Category Box (2 cols) - Indigo theme */}
+              {/* Enterprise Category Box (2 cols) */}
               <th colSpan={2} className="p-2.5 sm:p-3.5 text-center border-r border-slate-200 bg-gradient-to-b from-indigo-100/80 via-indigo-50/60 to-indigo-50/30 border-t-4 border-t-indigo-600">
                 <div className="flex items-center justify-center gap-1.5 mb-1">
                   <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-600 shrink-0" />
@@ -258,7 +510,7 @@ export function CommissionMatrix({ input, result, onChange }: CommissionMatrixPr
                 <div className="text-indigo-800 font-semibold text-[10px] sm:text-[11px]">Accounts 5% • Lines 5%</div>
               </th>
 
-              {/* Terminal Category Box (1 col) - Amber theme */}
+              {/* Terminal Category Box (1 col) */}
               <th className="p-2.5 sm:p-3.5 text-center border-r border-slate-200 bg-gradient-to-b from-amber-100/80 via-amber-50/60 to-amber-50/30 border-t-4 border-t-amber-500">
                 <div className="flex items-center justify-center gap-1.5 mb-1">
                   <Smartphone className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-600 shrink-0" />
@@ -269,7 +521,7 @@ export function CommissionMatrix({ input, result, onChange }: CommissionMatrixPr
                 </div>
               </th>
 
-              {/* Fixed Category Box (2 cols) - Emerald theme */}
+              {/* Fixed Category Box (2 cols) */}
               <th colSpan={2} className="p-2.5 sm:p-3.5 text-center bg-gradient-to-b from-emerald-100/80 via-emerald-50/60 to-emerald-50/30 border-t-4 border-t-emerald-600">
                 <div className="flex items-center justify-center gap-1.5 mb-1">
                   <Wifi className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 shrink-0" />
@@ -284,7 +536,6 @@ export function CommissionMatrix({ input, result, onChange }: CommissionMatrixPr
 
             {/* Sub-column Titles and Units (Component Boxes Row) */}
             <tr className="border-b border-slate-200 text-xs font-semibold text-slate-700">
-              {/* Component Header Label Box */}
               <th className="p-2 sm:p-3 text-center border-r border-slate-200 bg-slate-100 sticky left-0 z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                 <div className="inline-flex items-center justify-center gap-1 sm:gap-1.5 font-black text-slate-700 uppercase tracking-wider text-[11px] sm:text-xs">
                   <Boxes className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-500 shrink-0" />
@@ -292,21 +543,28 @@ export function CommissionMatrix({ input, result, onChange }: CommissionMatrixPr
                 </div>
               </th>
 
-              {/* 6 Unique Component Header Boxes */}
-              {columns.map((col) => (
+              {MATRIX_COLUMNS.map((col) => (
                 <th
                   key={col.id}
                   className={`p-2 sm:p-2.5 text-center border-r last:border-r-0 border-slate-200 transition-colors ${col.theme.subHeaderBg}`}
                 >
                   <div className="flex items-center justify-center gap-1.5">
-                    <span className={`w-2 h-2 rounded-full ${col.theme.accentDot} shrink-0`}></span>
+                    {col.isSummary ? (
+                      <Sigma className="w-3 h-3 text-[#E60000] shrink-0" />
+                    ) : (
+                      <span className={`w-2 h-2 rounded-full ${col.theme.accentDot} shrink-0`}></span>
+                    )}
                     <span className={`font-extrabold text-xs sm:text-sm ${col.theme.titleColor}`}>{col.subTitle}</span>
                   </div>
                   <div className="text-[10px] sm:text-[11px] font-normal flex items-center justify-center gap-1 sm:gap-1.5 mt-0.5 sm:mt-1">
-                    <span className={`font-extrabold px-1.5 sm:px-2 py-0.5 rounded-sm text-[9px] sm:text-[10px] ${col.theme.badgeBg} ${col.theme.badgeText}`}>
-                      {col.weightLabel}
-                    </span>
-                    <span className="text-slate-300">•</span>
+                    {col.weightLabel ? (
+                      <>
+                        <span className={`font-extrabold px-1.5 sm:px-2 py-0.5 rounded-sm text-[9px] sm:text-[10px] ${col.theme.badgeBg} ${col.theme.badgeText}`}>
+                          {col.weightLabel}
+                        </span>
+                        <span className="text-slate-300">•</span>
+                      </>
+                    ) : null}
                     <span className={`text-[10px] sm:text-[11px] font-medium ${col.theme.unitColor}`}>{col.unit}</span>
                   </div>
                 </th>
@@ -326,44 +584,16 @@ export function CommissionMatrix({ input, result, onChange }: CommissionMatrixPr
                   </div>
                 </div>
               </td>
-              {columns.map((col) => {
-                const currentInput = col.getter(input);
-                const isZero = currentInput.target === 0;
-                const isNegative = currentInput.target !== null && currentInput.target < 0;
-
-                return (
-                  <td key={col.id} className="p-2 sm:p-2.5 border-r last:border-r-0 border-slate-200 align-top">
-                    <div className="relative">
-                      <input
-                        type="number"
-                        min="0"
-                        step="any"
-                        placeholder="0"
-                        value={currentInput.target ?? ''}
-                        onChange={(e) => handleTargetChange(col, e.target.value)}
-                        className={`w-full text-center px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg border transition-all focus:outline-none focus:ring-2 print:hidden export-hide-input ${
-                          isZero || isNegative
-                            ? 'border-red-500 bg-red-50/50 text-red-900 focus:ring-red-500'
-                            : currentInput.target !== null
-                            ? `border-slate-300 bg-white text-slate-900 ${col.theme.focusRing}`
-                            : `border-slate-300 bg-white text-slate-900 ${col.theme.focusRing}`
-                        }`}
-                      />
-                      <div className="hidden print:flex export-show-text items-center justify-center text-center font-bold text-xs sm:text-sm text-slate-900 py-1.5 px-2 bg-slate-50 border border-slate-300 rounded-lg min-h-[34px] sm:min-h-[38px]">
-                        {currentInput.target !== null ? currentInput.target : <span className="text-slate-400 font-normal">0</span>}
-                      </div>
-                      <span className="block text-[10px] text-slate-400 text-center mt-0.5 sm:mt-1">
-                        {col.unit}
-                      </span>
-                      {isZero && (
-                        <span className="block text-[9px] sm:text-[10px] text-[#E60000] text-center font-semibold print:hidden export-hide-input">
-                          Must be &gt; 0
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                );
-              })}
+              {MATRIX_COLUMNS.map((col) => (
+                <MatrixInputCell
+                  key={col.id}
+                  col={col}
+                  isTarget={true}
+                  value={col.getter(input).target}
+                  summaryValue={result.acquisition.totalTarget}
+                  onChange={(val) => handleInputChange(col, 'target', val)}
+                />
+              ))}
             </tr>
 
             {/* ROW 2: Actual / Achieve */}
@@ -377,38 +607,16 @@ export function CommissionMatrix({ input, result, onChange }: CommissionMatrixPr
                   </div>
                 </div>
               </td>
-              {columns.map((col) => {
-                const currentInput = col.getter(input);
-                const isNegative = currentInput.actual !== null && currentInput.actual < 0;
-
-                return (
-                  <td key={col.id} className="p-2 sm:p-2.5 border-r last:border-r-0 border-slate-200 align-top">
-                    <div className="relative">
-                      <input
-                        type="number"
-                        min="0"
-                        step="any"
-                        placeholder="0"
-                        value={currentInput.actual ?? ''}
-                        onChange={(e) => handleActualChange(col, e.target.value)}
-                        className={`w-full text-center px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg border transition-all focus:outline-none focus:ring-2 print:hidden export-hide-input ${
-                          isNegative
-                            ? 'border-red-500 bg-red-50/50 text-red-900 focus:ring-red-500'
-                            : currentInput.actual !== null
-                            ? `border-slate-300 bg-white text-slate-900 ${col.theme.focusRing}`
-                            : `border-slate-300 bg-white text-slate-900 ${col.theme.focusRing}`
-                        }`}
-                      />
-                      <div className="hidden print:flex export-show-text items-center justify-center text-center font-bold text-xs sm:text-sm text-slate-900 py-1.5 px-2 bg-slate-50 border border-slate-300 rounded-lg min-h-[34px] sm:min-h-[38px]">
-                        {currentInput.actual !== null ? currentInput.actual : <span className="text-slate-400 font-normal">0</span>}
-                      </div>
-                      <span className="block text-[10px] text-slate-400 text-center mt-0.5 sm:mt-1">
-                        {col.unit}
-                      </span>
-                    </div>
-                  </td>
-                );
-              })}
+              {MATRIX_COLUMNS.map((col) => (
+                <MatrixInputCell
+                  key={col.id}
+                  col={col}
+                  isTarget={false}
+                  value={col.getter(input).actual}
+                  summaryValue={result.acquisition.totalActual}
+                  onChange={(val) => handleInputChange(col, 'actual', val)}
+                />
+              ))}
             </tr>
 
             {/* ROW 3: Percentages & Contributions */}
@@ -422,83 +630,32 @@ export function CommissionMatrix({ input, result, onChange }: CommissionMatrixPr
                   </div>
                 </div>
               </td>
-              {columns.map((col) => {
-                const res = col.resultGetter(result);
-                const isExceeded = res.missing === 0 && res.achievement !== null && res.achievement >= 100;
-
-                return (
-                  <td key={col.id} className="p-2 sm:p-3 border-r last:border-r-0 border-slate-200 align-top">
-                    <div className="flex flex-col gap-1.5 sm:gap-2">
-                      {/* Achievement % */}
-                      <div className="bg-white border border-slate-200 rounded-lg p-1.5 sm:p-2 text-center shadow-2xs">
-                        <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-500 block mb-0.5">
-                          Achievement %
-                        </span>
-                        <span className="text-sm sm:text-base font-extrabold text-slate-900">
-                          {formatPercentage(res.achievement)}
-                        </span>
-                      </div>
-
-                      {/* Contribution % with unique category theme color */}
-                      <div className={`${col.theme.contribBg} border ${col.theme.contribBorder} rounded-lg p-1.5 sm:p-2 text-center shadow-2xs`}>
-                        <span className={`text-[9px] sm:text-[10px] uppercase font-extrabold ${col.theme.contribText} block mb-0.5`}>
-                          Contribution %
-                        </span>
-                        <span className={`text-sm sm:text-base font-extrabold ${col.theme.contribText}`}>
-                          {formatPercentage(res.contribution)}
-                        </span>
-                        <span className="text-[9px] sm:text-[10px] text-slate-500 block mt-0.5">
-                          of {col.weightLabel}
-                        </span>
-                      </div>
-
-                      {/* Missing */}
-                      <div className="bg-white border border-slate-200 rounded-lg p-1.5 sm:p-2 text-center shadow-2xs">
-                        <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-500 block mb-0.5">
-                          Missing
-                        </span>
-                        <span
-                          className={`text-xs sm:text-sm font-bold ${
-                            res.missing !== null
-                              ? res.missing > 0
-                                ? 'text-[#E60000]'
-                                : 'text-emerald-600'
-                              : 'text-slate-400'
-                          }`}
-                        >
-                          {res.missing !== null ? (
-                            res.missing > 0 ? (
-                              `-${res.missing.toLocaleString()}`
-                            ) : (
-                              isExceeded ? '✓ Met' : '0'
-                            )
-                          ) : (
-                            '—'
-                          )}
-                        </span>
-                        {res.missing !== null && (
-                          <span className="text-[9px] sm:text-[10px] text-slate-400 block">
-                            {col.unit}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                );
-              })}
+              {MATRIX_COLUMNS.map((col) => (
+                <MatrixPercentageCell
+                  key={col.id}
+                  col={col}
+                  res={col.resultGetter(result)}
+                />
+              ))}
             </tr>
 
-            {/* Parent Categories Summary Sub-Row with Distinct Category Color Themes */}
+            {/* Parent Categories Summary Sub-Row */}
             <tr className="border-t-2 border-slate-200 bg-slate-50 text-xs">
               <td className="p-2 sm:p-3 font-bold text-slate-700 border-r border-slate-200 text-center bg-slate-100 sticky left-0 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                 Category Total
               </td>
-              {/* Voice / Acquisition Total */}
-              <td className="p-2 sm:p-2.5 text-center border-r border-slate-200 bg-red-50/70 font-bold">
-                <div className="text-xs sm:text-sm font-black text-[#E60000]">
-                  {formatPercentage(result.voice.contribution)}
+              {/* Acquisition Combined Total */}
+              <td colSpan={4} className="p-2 sm:p-2.5 text-center border-r border-slate-200 bg-red-50/70 font-bold">
+                <div className="flex items-center justify-center gap-1.5 sm:gap-2">
+                  <span className="text-red-950 font-bold text-xs">Total Acquisition:</span>
+                  <span className="text-xs sm:text-sm font-black text-[#E60000]">
+                    {formatPercentage(result.acquisition.total.contribution)}
+                  </span>
+                  <span className="text-[9px] sm:text-[10px] text-red-700 font-semibold">(Weight: 60%)</span>
                 </div>
-                <span className="text-[9px] sm:text-[10px] text-red-700 font-semibold block">of 60%</span>
+                <div className="text-[10px] text-red-800/80 font-medium mt-0.5">
+                  Low + High + Cash &rarr; Target: {result.acquisition.totalTarget ?? 0} • Actual: {result.acquisition.totalActual ?? 0} Points
+                </div>
               </td>
               {/* Enterprise Combined Total */}
               <td colSpan={2} className="p-2 sm:p-2.5 text-center border-r border-slate-200 bg-indigo-50/70">

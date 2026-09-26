@@ -9,6 +9,21 @@ export interface ComponentResult {
   missing: number | null;
 }
 
+export interface AcquisitionInput {
+  low: ComponentInput;
+  high: ComponentInput;
+  cash: ComponentInput;
+}
+
+export interface AcquisitionResult {
+  low: ComponentResult;
+  high: ComponentResult;
+  cash: ComponentResult;
+  total: ComponentResult;
+  totalTarget: number | null;
+  totalActual: number | null;
+}
+
 export interface EnterpriseInput {
   accounts: ComponentInput;
   lines: ComponentInput;
@@ -32,10 +47,11 @@ export interface FixedResult {
 }
 
 export interface CommissionInput {
-  voice: ComponentInput;
+  acquisition: AcquisitionInput;
   enterprise: EnterpriseInput;
   terminal: ComponentInput;
   fixed: FixedInput;
+  voice?: ComponentInput; // Optional legacy compatibility
 }
 
 export interface OverallResult {
@@ -44,7 +60,8 @@ export interface OverallResult {
 }
 
 export interface CommissionResult {
-  voice: ComponentResult;
+  acquisition: AcquisitionResult;
+  voice: ComponentResult; // Backward-compatible alias to acquisition.total
   enterprise: EnterpriseResult;
   terminal: ComponentResult;
   fixed: FixedResult;

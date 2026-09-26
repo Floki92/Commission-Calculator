@@ -23,8 +23,65 @@
   min-width: 100% !important;
 }
 
+.report-export-mode .report-hide-on-export {
+  display: none !important;
+}
+
+.report-export-mode .report-show-on-export {
+  display: block !important;
+}
+
 .report-export-mode .export-hide-input {
   display: none !important;
+}
+
+/* News Bar Ping-Pong Ticker: Moves smoothly from Right to Left and back (vice-versa) to display the entire note */
+@keyframes newsTickerPingPong {
+  0%, 18% {
+    transform: translateX(0);
+  }
+  48%, 68% {
+    transform: translateX(calc(-1 * var(--ticker-shift, 140px)));
+  }
+  98%, 100% {
+    transform: translateX(0);
+  }
+}
+
+.news-ticker-pingpong {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  animation: newsTickerPingPong 7.5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.news-ticker-container:hover .news-ticker-pingpong,
+.news-ticker-container:active .news-ticker-pingpong {
+  animation-play-state: paused;
+}
+
+/* Fallback Continuous RTL Marquee */
+@keyframes newsTickerRtl {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.news-ticker-track {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  animation: newsTickerRtl 14s linear infinite;
+  will-change: transform;
+}
+
+.news-ticker-container:hover .news-ticker-track,
+.news-ticker-container:active .news-ticker-track {
+  animation-play-state: paused;
 }
 
 .report-export-mode .export-show-text {

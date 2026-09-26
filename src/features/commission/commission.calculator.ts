@@ -3,6 +3,8 @@ import {
   CommissionResult, 
   ComponentInput, 
   ComponentResult, 
+  AcquisitionInput,
+  AcquisitionResult,
   EnterpriseInput, 
   EnterpriseResult,
   FixedInput,
@@ -32,6 +34,39 @@ function calculateComponent(input: ComponentInput, weight: number): ComponentRes
   return { achievement, contribution, missing };
 }
 
+function calculateAcquisition(input: AcquisitionInput): AcquisitionResult {
+  // Calculate individual achievements and missing metrics for Low, High, Cash
+  const low = calculateComponent(input.low, 0);
+  const high = calculateComponent(input.high, 0);
+  const cash = calculateComponent(input.cash, 0);
+
+  // Determine if any target or actual was provided
+  const hasAnyTarget = input.low.target !== null || input.high.target !== null || input.cash.target !== null;
+  const totalTarget = hasAnyTarget
+    ? (input.low.target ?? 0) + (input.high.target ?? 0) + (input.cash.target ?? 0)
+    : null;
+
+  const hasAnyActual = input.low.actual !== null || input.high.actual !== null || input.cash.actual !== null;
+  const totalActual = hasAnyActual
+    ? (input.low.actual ?? 0) + (input.high.actual ?? 0) + (input.cash.actual ?? 0)
+    : null;
+
+  // Calculate Total Acquisition with 60% weight
+  const total = calculateComponent(
+    { target: totalTarget, actual: totalActual },
+    COMMISSION_WEIGHTS.ACQUISITION
+  );
+
+  return {
+    low,
+    high,
+    cash,
+    total,
+    totalTarget,
+    totalActual,
+  };
+}
+
 function calculateEnterprise(input: EnterpriseInput): EnterpriseResult {
   const accounts = calculateComponent(input.accounts, COMMISSION_WEIGHTS.ENTERPRISE_ACCOUNTS);
   const lines = calculateComponent(input.lines, COMMISSION_WEIGHTS.ENTERPRISE_LINES);
@@ -53,13 +88,20 @@ function calculateFixed(input: FixedInput): FixedResult {
 }
 
 export function calculateCommission(input: CommissionInput): CommissionResult {
-  const voice = calculateComponent(input.voice, COMMISSION_WEIGHTS.VOICE);
+  // Support legacy voice input gracefully if acquisition is not provided
+  const acquisitionInput: AcquisitionInput = input.acquisition || {
+    low: { target: input.voice?.target ?? null, actual: input.voice?.actual ?? null },
+    high: { target: null, actual: null },
+    cash: { target: null, actual: null },
+  };
+
+  const acquisition = calculateAcquisition(acquisitionInput);
   const enterprise = calculateEnterprise(input.enterprise);
   const terminal = calculateComponent(input.terminal, COMMISSION_WEIGHTS.TERMINAL);
   const fixed = calculateFixed(input.fixed);
 
   const isComplete = 
-    voice.contribution !== null && 
+    acquisition.total.contribution !== null && 
     enterprise.totalContribution !== null && 
     terminal.contribution !== null && 
     fixed.totalContribution !== null;
@@ -67,14 +109,15 @@ export function calculateCommission(input: CommissionInput): CommissionResult {
   let overallAchievement: number | null = null;
   if (isComplete) {
     overallAchievement = 
-      voice.contribution! + 
+      acquisition.total.contribution! + 
       enterprise.totalContribution! + 
       terminal.contribution! + 
       fixed.totalContribution!;
   }
 
   return {
-    voice,
+    acquisition,
+    voice: acquisition.total, // Backward-compatible alias
     enterprise,
     terminal,
     fixed,
@@ -84,3 +127,4 @@ export function calculateCommission(input: CommissionInput): CommissionResult {
     }
   };
 }
+
