@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { CommissionInput, CommissionResult, ComponentInput } from '../features/commission/commission.types';
 import { COMMISSION_WEIGHTS, UNITS } from '../features/commission/commission.constants';
 import { formatPercentage } from '../features/commission/commission.utils';
@@ -39,7 +39,13 @@ export interface ColumnConfig {
   isSummary?: boolean;
   getter: (input: CommissionInput) => ComponentInput;
   setter?: (prev: CommissionInput, val: ComponentInput) => CommissionInput;
-  resultGetter: (result: CommissionResult) => { achievement: number | null; contribution: number | null; missing: number | null };
+  resultGetter: (result: CommissionResult) => { 
+    achievement: number | null; 
+    vs?: number | null; 
+    re?: number | null; 
+    contribution: number | null; 
+    missing: number | null 
+  };
 }
 
 // Static columns definition - created ONCE, avoiding garbage collection overhead on every render
@@ -298,7 +304,6 @@ export const MATRIX_COLUMNS: ColumnConfig[] = [
 
 /**
  * Reusable Matrix Input Cell for Row 1 (Target) & Row 2 (Actual).
- * Eliminates redundant input JSX, print elements, and validation logic.
  */
 interface MatrixInputCellProps {
   col: ColumnConfig;
@@ -326,7 +331,6 @@ const MatrixInputCell = React.memo(function MatrixInputCell({
               <span className="text-slate-400 font-normal">0</span>
             )}
           </div>
-          <span className="text-[10px] text-red-700/80 font-medium">{col.unit}</span>
         </div>
       </td>
     );
@@ -340,6 +344,7 @@ const MatrixInputCell = React.memo(function MatrixInputCell({
       <div className="relative">
         <input
           type="number"
+          inputMode="decimal"
           min="0"
           step="any"
           placeholder="0"
@@ -354,9 +359,11 @@ const MatrixInputCell = React.memo(function MatrixInputCell({
         <div className="hidden print:flex export-show-text items-center justify-center text-center font-bold text-xs sm:text-sm text-slate-900 py-1.5 px-2 bg-slate-50 border border-slate-300 rounded-lg min-h-[34px] sm:min-h-[38px]">
           {value !== null ? value : <span className="text-slate-400 font-normal">0</span>}
         </div>
-        <span className="block text-[10px] text-slate-400 text-center mt-0.5 sm:mt-1">
-          {col.unit}
-        </span>
+        {col.unit ? (
+          <span className="block text-[10px] text-slate-400 text-center mt-0.5 sm:mt-1">
+            {col.unit}
+          </span>
+        ) : null}
         {isZero && (
           <span className="block text-[9px] sm:text-[10px] text-[#E60000] text-center font-semibold print:hidden export-hide-input">
             Must be &gt; 0
@@ -368,11 +375,17 @@ const MatrixInputCell = React.memo(function MatrixInputCell({
 });
 
 /**
- * Reusable Matrix Percentage Cell for Row 3 (Percentages & Contributions).
+ * Reusable Matrix Percentage Cell for Row 3 (Percentages: VS%, RE%, Contributions & Missing).
  */
 interface MatrixPercentageCellProps {
   col: ColumnConfig;
-  res: { achievement: number | null; contribution: number | null; missing: number | null };
+  res: { 
+    achievement: number | null; 
+    vs?: number | null; 
+    re?: number | null; 
+    contribution: number | null; 
+    missing: number | null 
+  };
 }
 
 const MatrixPercentageCell = React.memo(function MatrixPercentageCell({
@@ -380,32 +393,48 @@ const MatrixPercentageCell = React.memo(function MatrixPercentageCell({
   res,
 }: MatrixPercentageCellProps) {
   const isExceeded = res.missing === 0 && res.achievement !== null && res.achievement >= 100;
+  const vs = res.vs ?? res.achievement;
+  const re = res.re ?? null;
 
   return (
-    <td className={`p-2 sm:p-3 border-r last:border-r-0 border-slate-200 align-top ${col.isSummary ? 'bg-red-50/40' : ''}`}>
+    <td className={`p-2 sm:p-2.5 border-r last:border-r-0 border-slate-200 align-top ${col.isSummary ? 'bg-red-50/40' : ''}`}>
       <div className="flex flex-col gap-1.5 sm:gap-2">
-        {/* Achievement % */}
+        {/* VS% (Actual Achievement) */}
         <div className="bg-white border border-slate-200 rounded-lg p-1.5 sm:p-2 text-center shadow-2xs">
-          <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-500 block mb-0.5">
-            {col.isSummary ? 'Total Acq %' : 'Achievement %'}
+          <div className="flex items-center justify-between px-0.5 mb-0.5">
+            <span className="text-[9px] uppercase font-black text-slate-800 tracking-wider">VS%</span>
+            <span className="text-[8px] font-semibold text-slate-400">Actual</span>
+          </div>
+          <span className="text-xs sm:text-sm font-extrabold text-slate-900 block">
+            {formatPercentage(vs)}
           </span>
-          <span className="text-sm sm:text-base font-extrabold text-slate-900">
-            {formatPercentage(res.achievement)}
+        </div>
+
+        {/* RE% (Run-Rate Expected by Month End) */}
+        <div className="bg-gradient-to-b from-indigo-50/90 to-indigo-50/40 border border-indigo-200 rounded-lg p-1.5 sm:p-2 text-center shadow-2xs">
+          <div className="flex items-center justify-between px-0.5 mb-0.5">
+            <span className="text-[9px] uppercase font-black text-indigo-700 tracking-wider">RE%</span>
+            <span className="text-[8px] font-bold text-indigo-500">Expected</span>
+          </div>
+          <span className="text-xs sm:text-sm font-black text-indigo-900 block">
+            {formatPercentage(re)}
           </span>
         </div>
 
         {/* Contribution % */}
         {!col.isSubBox && (
           <div className={`${col.theme.contribBg} border ${col.theme.contribBorder} rounded-lg p-1.5 sm:p-2 text-center shadow-2xs`}>
-            <span className={`text-[9px] sm:text-[10px] uppercase font-extrabold ${col.theme.contribText} block mb-0.5`}>
+            <span className={`text-[9px] uppercase font-extrabold ${col.theme.contribText} block mb-0.5`}>
               Contribution %
             </span>
-            <span className={`text-sm sm:text-base font-extrabold ${col.theme.contribText}`}>
+            <span className={`text-xs sm:text-sm font-extrabold ${col.theme.contribText} block`}>
               {formatPercentage(res.contribution)}
             </span>
-            <span className="text-[9px] sm:text-[10px] text-slate-500 block mt-0.5 font-semibold">
-              of {col.weightLabel}
-            </span>
+            {!col.isSummary && (
+              <span className="text-[9px] sm:text-[10px] text-slate-500 block mt-0.5 font-semibold">
+                of {col.weightLabel}
+              </span>
+            )}
           </div>
         )}
 
@@ -415,7 +444,7 @@ const MatrixPercentageCell = React.memo(function MatrixPercentageCell({
             Missing
           </span>
           <span
-            className={`text-xs sm:text-sm font-bold ${
+            className={`text-xs sm:text-sm font-bold block ${
               res.missing !== null
                 ? res.missing > 0
                   ? 'text-[#E60000]'
@@ -556,16 +585,18 @@ export function CommissionMatrix({ input, result, onChange, acqNote, onAcqNoteCh
                     )}
                     <span className={`font-extrabold text-xs sm:text-sm ${col.theme.titleColor}`}>{col.subTitle}</span>
                   </div>
-                  <div className="text-[10px] sm:text-[11px] font-normal flex items-center justify-center gap-1 sm:gap-1.5 mt-0.5 sm:mt-1">
+                  <div className="text-[10px] sm:text-[11px] font-normal flex items-center justify-center gap-1 sm:gap-1.5 mt-0.5 sm:mt-1 min-h-[16px]">
                     {col.weightLabel ? (
-                      <>
-                        <span className={`font-extrabold px-1.5 sm:px-2 py-0.5 rounded-sm text-[9px] sm:text-[10px] ${col.theme.badgeBg} ${col.theme.badgeText}`}>
-                          {col.weightLabel}
-                        </span>
-                        <span className="text-slate-300">•</span>
-                      </>
+                      <span className={`font-extrabold px-1.5 sm:px-2 py-0.5 rounded-sm text-[9px] sm:text-[10px] ${col.theme.badgeBg} ${col.theme.badgeText}`}>
+                        {col.weightLabel}
+                      </span>
                     ) : null}
-                    <span className={`text-[10px] sm:text-[11px] font-medium ${col.theme.unitColor}`}>{col.unit}</span>
+                    {col.weightLabel && col.unit ? (
+                      <span className="text-slate-300">•</span>
+                    ) : null}
+                    {col.unit ? (
+                      <span className={`text-[10px] sm:text-[11px] font-semibold ${col.theme.unitColor}`}>{col.unit}</span>
+                    ) : null}
                   </div>
                 </th>
               ))}
@@ -619,14 +650,14 @@ export function CommissionMatrix({ input, result, onChange, acqNote, onAcqNoteCh
               ))}
             </tr>
 
-            {/* ROW 3: Percentages & Contributions */}
+            {/* ROW 3: Percentages (VS% & RE% & Contributions & Missing) */}
             <tr className="bg-slate-50/60">
               <td className="p-2 sm:p-3 font-bold text-slate-900 border-r border-slate-200 bg-slate-100 sticky left-0 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] align-top">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#E60000] shrink-0"></span>
                   <div>
-                    <div className="text-xs sm:text-sm font-bold text-slate-900 leading-tight">Percentages</div>
-                    <div className="text-[10px] sm:text-[11px] text-slate-500 font-normal">Achieve & Contrib</div>
+                    <div className="text-xs sm:text-sm font-bold text-slate-900 leading-tight">VS% & RE%</div>
+                    <div className="text-[10px] sm:text-[11px] text-slate-500 font-normal">Actual & Expected Run-Rate</div>
                   </div>
                 </div>
               </td>
@@ -639,17 +670,21 @@ export function CommissionMatrix({ input, result, onChange, acqNote, onAcqNoteCh
               ))}
             </tr>
 
-            {/* Parent Categories Summary Sub-Row */}
+            {/* Parent Categories Summary Sub-Row with VS% and RE% totals */}
             <tr className="border-t-2 border-slate-200 bg-slate-50 text-xs">
               <td className="p-2 sm:p-3 font-bold text-slate-700 border-r border-slate-200 text-center bg-slate-100 sticky left-0 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                 Category Total
               </td>
               {/* Acquisition Combined Total */}
               <td colSpan={4} className="p-2 sm:p-2.5 text-center border-r border-slate-200 bg-red-50/70 font-bold">
-                <div className="flex items-center justify-center gap-1.5 sm:gap-2">
+                <div className="flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap">
                   <span className="text-red-950 font-bold text-xs">Total Acquisition:</span>
                   <span className="text-xs sm:text-sm font-black text-[#E60000]">
-                    {formatPercentage(result.acquisition.total.contribution)}
+                    VS: {formatPercentage(result.acquisition.total.contribution)}
+                  </span>
+                  <span className="text-slate-300">•</span>
+                  <span className="text-xs sm:text-sm font-black text-indigo-700">
+                    RE: {formatPercentage(result.acquisition.total.re !== null && result.acquisition.total.re !== undefined ? result.acquisition.total.re * COMMISSION_WEIGHTS.ACQUISITION : null)}
                   </span>
                   <span className="text-[9px] sm:text-[10px] text-red-700 font-semibold">(Weight: 60%)</span>
                 </div>
@@ -659,27 +694,40 @@ export function CommissionMatrix({ input, result, onChange, acqNote, onAcqNoteCh
               </td>
               {/* Enterprise Combined Total */}
               <td colSpan={2} className="p-2 sm:p-2.5 text-center border-r border-slate-200 bg-indigo-50/70">
-                <div className="flex items-center justify-center gap-1.5 sm:gap-2">
+                <div className="flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap">
                   <span className="text-indigo-900 font-bold text-xs">Enterprise:</span>
                   <span className="text-xs sm:text-sm font-black text-indigo-700">
-                    {formatPercentage(result.enterprise.totalContribution)}
+                    VS: {formatPercentage(result.enterprise.totalContribution)}
+                  </span>
+                  <span className="text-slate-300">•</span>
+                  <span className="text-xs sm:text-sm font-black text-indigo-900">
+                    RE: {formatPercentage(result.enterprise.totalRE)}
                   </span>
                   <span className="text-[9px] sm:text-[10px] text-indigo-600 font-bold">(10%)</span>
                 </div>
               </td>
               {/* Terminal Total */}
               <td className="p-2 sm:p-2.5 text-center border-r border-slate-200 bg-amber-50/70 font-bold">
-                <div className="text-xs sm:text-sm font-black text-amber-700">
-                  {formatPercentage(result.terminal.contribution)}
+                <div className="flex flex-col items-center justify-center">
+                  <div className="text-xs sm:text-sm font-black text-amber-700">
+                    VS: {formatPercentage(result.terminal.contribution)}
+                  </div>
+                  <div className="text-[11px] font-black text-amber-900">
+                    RE: {formatPercentage(result.terminal.re !== null && result.terminal.re !== undefined ? result.terminal.re * COMMISSION_WEIGHTS.TERMINAL : null)}
+                  </div>
+                  <span className="text-[9px] sm:text-[10px] text-amber-800 font-semibold block">of 10%</span>
                 </div>
-                <span className="text-[9px] sm:text-[10px] text-amber-800 font-semibold block">of 10%</span>
               </td>
               {/* Fixed Combined Total */}
               <td colSpan={2} className="p-2 sm:p-2.5 text-center bg-emerald-50/70">
-                <div className="flex items-center justify-center gap-1.5 sm:gap-2">
+                <div className="flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap">
                   <span className="text-emerald-900 font-bold text-xs">Fixed:</span>
                   <span className="text-xs sm:text-sm font-black text-emerald-700">
-                    {formatPercentage(result.fixed.totalContribution)}
+                    VS: {formatPercentage(result.fixed.totalContribution)}
+                  </span>
+                  <span className="text-slate-300">•</span>
+                  <span className="text-xs sm:text-sm font-black text-emerald-900">
+                    RE: {formatPercentage(result.fixed.totalRE)}
                   </span>
                   <span className="text-[9px] sm:text-[10px] text-emerald-700 font-bold">(20%)</span>
                 </div>

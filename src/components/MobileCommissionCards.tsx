@@ -43,6 +43,8 @@ const MobileCard = React.memo(function MobileCard({
   const isZero = target === 0;
   const isNegative = (target !== null && target < 0) || (actual !== null && actual < 0);
   const isExceeded = res.missing === 0 && res.achievement !== null && res.achievement >= 100;
+  const vs = res.vs ?? res.achievement;
+  const re = res.re ?? null;
 
   return (
     <div
@@ -134,26 +136,41 @@ const MobileCard = React.memo(function MobileCard({
         </div>
       )}
 
-      {/* Results Bar */}
-      <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-slate-100 bg-slate-50/70 -mx-3 -mb-3 p-2 rounded-b-xl">
-        <div className="text-center">
-          <span className="text-[9px] uppercase font-bold text-slate-400 block">Achievement</span>
-          <span className="text-xs sm:text-sm font-extrabold text-slate-900">
-            {formatPercentage(res.achievement)}
+      {/* Results Bar: 4-Metric Grid (VS%, RE%, Contrib, Missing) */}
+      <div className="grid grid-cols-4 gap-1 pt-2 border-t border-slate-100 bg-slate-50/70 -mx-3 -mb-3 p-2 rounded-b-xl">
+        {/* VS% (Actual) */}
+        <div className="text-center bg-white/90 rounded-lg py-1 px-0.5 border border-slate-200 shadow-2xs">
+          <span className="text-[9px] uppercase font-black text-slate-800 block leading-tight">VS%</span>
+          <span className="text-[8px] text-slate-400 block leading-tight mb-0.5">Actual</span>
+          <span className="text-xs sm:text-sm font-black text-slate-900 block truncate">
+            {formatPercentage(vs)}
           </span>
         </div>
 
-        <div className="text-center">
-          <span className="text-[9px] uppercase font-bold text-slate-400 block">Contribution</span>
-          <span className="text-xs sm:text-sm font-extrabold text-slate-900">
+        {/* RE% (Run-Rate Expected) */}
+        <div className="text-center bg-indigo-50/90 rounded-lg py-1 px-0.5 border border-indigo-200 shadow-2xs">
+          <span className="text-[9px] uppercase font-black text-indigo-700 block leading-tight">RE%</span>
+          <span className="text-[8px] text-indigo-500 block leading-tight mb-0.5">Expected</span>
+          <span className="text-xs sm:text-sm font-black text-indigo-950 block truncate">
+            {formatPercentage(re)}
+          </span>
+        </div>
+
+        {/* Contribution */}
+        <div className="text-center bg-white/90 rounded-lg py-1 px-0.5 border border-slate-200 shadow-2xs">
+          <span className="text-[9px] uppercase font-bold text-slate-600 block leading-tight">Contrib</span>
+          <span className="text-[8px] text-slate-400 block leading-tight mb-0.5">Weight</span>
+          <span className="text-xs sm:text-sm font-extrabold text-slate-800 block truncate">
             {res.contribution !== null ? formatPercentage(res.contribution) : '—'}
           </span>
         </div>
 
-        <div className="text-center">
-          <span className="text-[9px] uppercase font-bold text-slate-400 block">Missing</span>
+        {/* Missing */}
+        <div className="text-center bg-white/90 rounded-lg py-1 px-0.5 border border-slate-200 shadow-2xs">
+          <span className="text-[9px] uppercase font-bold text-slate-600 block leading-tight">Missing</span>
+          <span className="text-[8px] text-slate-400 block leading-tight mb-0.5">{unit}</span>
           <span
-            className={`text-xs sm:text-sm font-bold ${
+            className={`text-xs sm:text-sm font-bold block truncate ${
               res.missing !== null
                 ? res.missing > 0
                   ? 'text-[#E60000]'
@@ -184,6 +201,7 @@ interface CategoryGroup {
   badgeBg: string;
   textColor: string;
   getContribution: (res: CommissionResult) => number | null;
+  getRE: (res: CommissionResult) => number | null;
 }
 
 const CATEGORY_GROUPS: CategoryGroup[] = [
@@ -196,6 +214,7 @@ const CATEGORY_GROUPS: CategoryGroup[] = [
     badgeBg: 'bg-[#E60000]',
     textColor: 'text-[#E60000]',
     getContribution: (res) => res.acquisition.total.contribution,
+    getRE: (res) => (res.acquisition.total.re !== null && res.acquisition.total.re !== undefined ? res.acquisition.total.re * 0.60 : null),
   },
   {
     name: 'Enterprise',
@@ -206,6 +225,7 @@ const CATEGORY_GROUPS: CategoryGroup[] = [
     badgeBg: 'bg-indigo-600',
     textColor: 'text-indigo-700',
     getContribution: (res) => res.enterprise.totalContribution,
+    getRE: (res) => res.enterprise.totalRE ?? null,
   },
   {
     name: 'Terminal',
@@ -216,6 +236,7 @@ const CATEGORY_GROUPS: CategoryGroup[] = [
     badgeBg: 'bg-amber-600',
     textColor: 'text-amber-700',
     getContribution: (res) => res.terminal.contribution,
+    getRE: (res) => (res.terminal.re !== null && res.terminal.re !== undefined ? res.terminal.re * 0.10 : null),
   },
   {
     name: 'Fixed',
@@ -226,6 +247,7 @@ const CATEGORY_GROUPS: CategoryGroup[] = [
     badgeBg: 'bg-emerald-600',
     textColor: 'text-emerald-700',
     getContribution: (res) => res.fixed.totalContribution,
+    getRE: (res) => res.fixed.totalRE ?? null,
   },
 ];
 
@@ -290,16 +312,17 @@ export function MobileCommissionCards({
 
         const Icon = cat.icon;
         const catColumns = MATRIX_COLUMNS.filter((c) => c.category === cat.name);
-        const contribution = cat.getContribution(result);
+        const vsContribution = cat.getContribution(result);
+        const reContribution = cat.getRE(result);
 
         return (
           <div
             key={cat.name}
             className={`bg-white rounded-2xl border ${cat.borderColor} p-3.5 shadow-xs space-y-3`}
           >
-            {/* Category Header */}
+            {/* Category Header with both VS% and RE% */}
             <div className={`flex flex-col gap-2 pb-2 border-b ${cat.headerBorder}`}>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-1.5">
                   <Icon className={`w-4 h-4 ${cat.textColor}`} />
                   <h3 className="font-black text-slate-900 text-base">{cat.name}</h3>
@@ -307,8 +330,13 @@ export function MobileCommissionCards({
                     {cat.weight}
                   </span>
                 </div>
-                <div className={`text-xs font-black ${cat.textColor}`}>
-                  {formatPercentage(contribution)}
+                <div className="flex items-center gap-2 text-xs font-black">
+                  <span className="text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
+                    VS: {formatPercentage(vsContribution)}
+                  </span>
+                  <span className="text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded">
+                    RE: {formatPercentage(reContribution)}
+                  </span>
                 </div>
               </div>
 

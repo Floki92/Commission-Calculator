@@ -178,4 +178,68 @@ describe('Commission Calculator', () => {
     expect(result.overall.achievement).toBeCloseTo(74.8, 2);
     expect(result.overall.isComplete).toBe(true);
   });
+
+  it('13. Calculates VS% and RE% accurately with monthConfig', () => {
+    // If today is day 15 of a 30-day month, RE% is exactly double VS%
+    const input: CommissionInput = {
+      acquisition: {
+        low: { target: 100, actual: 50 },
+        high: { target: 100, actual: 50 },
+        cash: { target: 100, actual: 50 },
+      },
+      enterprise: {
+        accounts: { target: 10, actual: 5 },
+        lines: { target: 10, actual: 5 },
+      },
+      terminal: { target: 1000, actual: 500 },
+      fixed: {
+        dsl: { target: 10, actual: 5 },
+        connectivity: { target: 10, actual: 5 },
+      }
+    };
+
+    const monthConfig = { today: 15, totalDays: 30 };
+    const result = calculateCommission(input, monthConfig);
+
+    // VS% is (50 / 100) * 100 = 50%
+    // RE% is 50% * (30 / 15) = 100%
+    expect(result.acquisition.total.vs).toBe(50);
+    expect(result.acquisition.total.re).toBe(100);
+
+    expect(result.enterprise.accounts.vs).toBe(50);
+    expect(result.enterprise.accounts.re).toBe(100);
+
+    expect(result.terminal.vs).toBe(50);
+    expect(result.terminal.re).toBe(100);
+
+    // Overall VS% = 50%, RE% = 100%
+    expect(result.overall.vs).toBe(50);
+    expect(result.overall.re).toBe(100);
+  });
+
+  it('14. RE% with fractional days and over-achievement', () => {
+    // If today is day 20 of a 30-day month (factor 1.5), and VS% is 80%, RE% is 120%
+    const input: CommissionInput = {
+      acquisition: {
+        low: { target: 100, actual: 80 },
+        high: { target: 100, actual: 80 },
+        cash: { target: 100, actual: 80 },
+      },
+      enterprise: {
+        accounts: { target: 10, actual: 8 },
+        lines: { target: 10, actual: 8 },
+      },
+      terminal: { target: 1000, actual: 800 },
+      fixed: {
+        dsl: { target: 10, actual: 8 },
+        connectivity: { target: 10, actual: 8 },
+      }
+    };
+
+    const monthConfig = { today: 20, totalDays: 30 };
+    const result = calculateCommission(input, monthConfig);
+
+    expect(result.overall.vs).toBe(80);
+    expect(result.overall.re).toBe(120);
+  });
 });

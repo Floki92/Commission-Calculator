@@ -10,7 +10,7 @@ interface TNPSState {
 
 const TNPS_STORAGE_KEY = 'vodafone_tnps_state_v1';
 
-function getStoredTNPSState(): TNPSState {
+export function getStoredTNPSState(): TNPSState {
   const defaultState: TNPSState = {
     promoters: null,
     passive: null,

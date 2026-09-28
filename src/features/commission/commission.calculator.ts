@@ -8,37 +8,60 @@ import {
   EnterpriseInput, 
   EnterpriseResult,
   FixedInput,
-  FixedResult
+  FixedResult,
+  MonthProgressConfig
 } from './commission.types';
 import { COMMISSION_WEIGHTS } from './commission.constants';
 
-function calculateComponent(input: ComponentInput, weight: number): ComponentResult {
+export function calculateRunRate(
+  vsPercentage: number | null,
+  today: number,
+  totalMonthDays: number
+): number | null {
+  if (vsPercentage === null || today <= 0 || totalMonthDays <= 0) return null;
+  return vsPercentage * (totalMonthDays / today);
+}
+
+function calculateComponent(
+  input: ComponentInput, 
+  weight: number,
+  monthConfig?: MonthProgressConfig
+): ComponentResult {
   if (input.target === null || input.actual === null) {
-    return { achievement: null, contribution: null, missing: null };
+    return { achievement: null, vs: null, re: null, contribution: null, missing: null };
   }
   
   if (input.target <= 0) {
-    return { achievement: null, contribution: null, missing: null };
+    return { achievement: null, vs: null, re: null, contribution: null, missing: null };
   }
 
   if (input.actual < 0) {
-    return { achievement: null, contribution: null, missing: null };
+    return { achievement: null, vs: null, re: null, contribution: null, missing: null };
   }
 
+  // VS% = (Actual / Target) * 100
   const achievement = (input.actual / input.target) * 100;
+  const vs = achievement;
+  
+  // RE% = VS% * (Total Month Days / Today)
+  const re = monthConfig ? calculateRunRate(vs, monthConfig.today, monthConfig.totalDays) : null;
+  
   const contribution = achievement * weight;
   
-  // Calculate missing value (floor to 0 if actual exceeds target, or just target - actual)
+  // Calculate missing value (floor to 0 if actual exceeds target)
   const missing = Math.max(0, input.target - input.actual);
 
-  return { achievement, contribution, missing };
+  return { achievement, vs, re, contribution, missing };
 }
 
-function calculateAcquisition(input: AcquisitionInput): AcquisitionResult {
+function calculateAcquisition(
+  input: AcquisitionInput,
+  monthConfig?: MonthProgressConfig
+): AcquisitionResult {
   // Calculate individual achievements and missing metrics for Low, High, Cash
-  const low = calculateComponent(input.low, 0);
-  const high = calculateComponent(input.high, 0);
-  const cash = calculateComponent(input.cash, 0);
+  const low = calculateComponent(input.low, 0, monthConfig);
+  const high = calculateComponent(input.high, 0, monthConfig);
+  const cash = calculateComponent(input.cash, 0, monthConfig);
 
   // Determine if any target or actual was provided
   const hasAnyTarget = input.low.target !== null || input.high.target !== null || input.cash.target !== null;
@@ -54,7 +77,8 @@ function calculateAcquisition(input: AcquisitionInput): AcquisitionResult {
   // Calculate Total Acquisition with 60% weight
   const total = calculateComponent(
     { target: totalTarget, actual: totalActual },
-    COMMISSION_WEIGHTS.ACQUISITION
+    COMMISSION_WEIGHTS.ACQUISITION,
+    monthConfig
   );
 
   return {
@@ -67,27 +91,42 @@ function calculateAcquisition(input: AcquisitionInput): AcquisitionResult {
   };
 }
 
-function calculateEnterprise(input: EnterpriseInput): EnterpriseResult {
-  const accounts = calculateComponent(input.accounts, COMMISSION_WEIGHTS.ENTERPRISE_ACCOUNTS);
-  const lines = calculateComponent(input.lines, COMMISSION_WEIGHTS.ENTERPRISE_LINES);
+function calculateEnterprise(
+  input: EnterpriseInput,
+  monthConfig?: MonthProgressConfig
+): EnterpriseResult {
+  const accounts = calculateComponent(input.accounts, COMMISSION_WEIGHTS.ENTERPRISE_ACCOUNTS, monthConfig);
+  const lines = calculateComponent(input.lines, COMMISSION_WEIGHTS.ENTERPRISE_LINES, monthConfig);
 
   const isComplete = accounts.contribution !== null && lines.contribution !== null;
   const totalContribution = isComplete ? (accounts.contribution! + lines.contribution!) : null;
+  const totalRE = (isComplete && monthConfig) 
+    ? calculateRunRate(totalContribution, monthConfig.today, monthConfig.totalDays) 
+    : null;
 
-  return { accounts, lines, totalContribution };
+  return { accounts, lines, totalContribution, totalRE };
 }
 
-function calculateFixed(input: FixedInput): FixedResult {
-  const dsl = calculateComponent(input.dsl, COMMISSION_WEIGHTS.DSL);
-  const connectivity = calculateComponent(input.connectivity, COMMISSION_WEIGHTS.CONNECTIVITY);
+function calculateFixed(
+  input: FixedInput,
+  monthConfig?: MonthProgressConfig
+): FixedResult {
+  const dsl = calculateComponent(input.dsl, COMMISSION_WEIGHTS.DSL, monthConfig);
+  const connectivity = calculateComponent(input.connectivity, COMMISSION_WEIGHTS.CONNECTIVITY, monthConfig);
 
   const isComplete = dsl.contribution !== null && connectivity.contribution !== null;
   const totalContribution = isComplete ? (dsl.contribution! + connectivity.contribution!) : null;
+  const totalRE = (isComplete && monthConfig) 
+    ? calculateRunRate(totalContribution, monthConfig.today, monthConfig.totalDays) 
+    : null;
 
-  return { dsl, connectivity, totalContribution };
+  return { dsl, connectivity, totalContribution, totalRE };
 }
 
-export function calculateCommission(input: CommissionInput): CommissionResult {
+export function calculateCommission(
+  input: CommissionInput,
+  monthConfig?: MonthProgressConfig
+): CommissionResult {
   // Support legacy voice input gracefully if acquisition is not provided
   const acquisitionInput: AcquisitionInput = input.acquisition || {
     low: { target: input.voice?.target ?? null, actual: input.voice?.actual ?? null },
@@ -95,10 +134,10 @@ export function calculateCommission(input: CommissionInput): CommissionResult {
     cash: { target: null, actual: null },
   };
 
-  const acquisition = calculateAcquisition(acquisitionInput);
-  const enterprise = calculateEnterprise(input.enterprise);
-  const terminal = calculateComponent(input.terminal, COMMISSION_WEIGHTS.TERMINAL);
-  const fixed = calculateFixed(input.fixed);
+  const acquisition = calculateAcquisition(acquisitionInput, monthConfig);
+  const enterprise = calculateEnterprise(input.enterprise, monthConfig);
+  const terminal = calculateComponent(input.terminal, COMMISSION_WEIGHTS.TERMINAL, monthConfig);
+  const fixed = calculateFixed(input.fixed, monthConfig);
 
   const isComplete = 
     acquisition.total.contribution !== null && 
@@ -107,12 +146,18 @@ export function calculateCommission(input: CommissionInput): CommissionResult {
     fixed.totalContribution !== null;
 
   let overallAchievement: number | null = null;
+  let overallRE: number | null = null;
+
   if (isComplete) {
     overallAchievement = 
       acquisition.total.contribution! + 
       enterprise.totalContribution! + 
       terminal.contribution! + 
       fixed.totalContribution!;
+
+    if (monthConfig) {
+      overallRE = calculateRunRate(overallAchievement, monthConfig.today, monthConfig.totalDays);
+    }
   }
 
   return {
@@ -123,8 +168,9 @@ export function calculateCommission(input: CommissionInput): CommissionResult {
     fixed,
     overall: {
       achievement: overallAchievement,
+      vs: overallAchievement,
+      re: overallRE,
       isComplete
     }
   };
 }
-

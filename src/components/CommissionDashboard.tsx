@@ -1,16 +1,17 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { CommissionInput, ComponentInput } from '../features/commission/commission.types';
+import { CommissionInput, ComponentInput, MonthProgressConfig } from '../features/commission/commission.types';
 import { calculateCommission } from '../features/commission/commission.calculator';
 import { formatPercentage } from '../features/commission/commission.utils';
 import { CommissionMatrix } from './CommissionMatrix';
 import { MobileCommissionCards } from './MobileCommissionCards';
 import { VodafoneLogo } from './VodafoneLogo';
 import { TNPSCalculator } from './TNPSCalculator';
+import { PDFReportTemplate } from './PDFReportTemplate';
 import { 
   RefreshCw, 
   CheckCircle2, 
   AlertCircle, 
-  Heart, 
+  Heart,
   FileText, 
   Loader2, 
   Zap, 
@@ -19,7 +20,11 @@ import {
   Wifi, 
   Table as TableIcon, 
   LayoutGrid, 
-  ArrowUp 
+  ArrowUp,
+  Calendar,
+  RotateCcw,
+  TrendingUp,
+  Percent
 } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
@@ -46,12 +51,22 @@ const initialInput: CommissionInput = {
 const COMMISSION_STORAGE_KEY = 'vodafone_commission_input_v2';
 const LEGACY_COMMISSION_STORAGE_KEY = 'vodafone_commission_input_v1';
 const ACQ_NOTE_STORAGE_KEY = 'vodafone_acq_note_v2';
+const MONTH_CONFIG_STORAGE_KEY = 'vodafone_commission_month_config_v1';
 const DEFAULT_ACQ_NOTE = "Must Get 90% of High GA's to not lose any Over in Low GA's";
 
 const parseComp = (comp?: any, fbT: number | null = null, fbA: number | null = null): ComponentInput => ({
   target: typeof comp?.target === 'number' ? comp.target : fbT,
   actual: typeof comp?.actual === 'number' ? comp.actual : fbA,
 });
+
+const getInitialMonthConfig = (): MonthProgressConfig => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const totalDays = new Date(year, month + 1, 0).getDate();
+  const today = Math.min(now.getDate(), totalDays);
+  return { today, totalDays };
+};
 
 function getStoredCommissionInput(): CommissionInput {
   if (typeof window === 'undefined') return initialInput;
@@ -89,6 +104,22 @@ export function CommissionDashboard() {
   const [input, setInput] = useState<CommissionInput>(getStoredCommissionInput);
   const [isExporting, setIsExporting] = useState(false);
   
+  // Month Run-rate settings: Today & Total Month Days
+  const [monthConfig, setMonthConfig] = useState<MonthProgressConfig>(() => {
+    const defaults = getInitialMonthConfig();
+    if (typeof window === 'undefined') return defaults;
+    try {
+      const raw = localStorage.getItem(MONTH_CONFIG_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (typeof parsed?.today === 'number' && typeof parsed?.totalDays === 'number' && parsed.today > 0 && parsed.totalDays > 0) {
+          return parsed;
+        }
+      }
+    } catch {}
+    return defaults;
+  });
+
   // Responsive default: cards on mobile, table on desktop
   const [viewMode, setViewMode] = useState<'cards' | 'table'>(() => {
     if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
@@ -131,13 +162,21 @@ export function CommissionDashboard() {
     }
   }, [input]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(MONTH_CONFIG_STORAGE_KEY, JSON.stringify(monthConfig));
+    } catch (err) {
+      console.error('Error saving month config:', err);
+    }
+  }, [monthConfig]);
+
   // Ensure dark mode class is completely removed
   useEffect(() => {
     document.documentElement.classList.remove('dark');
     localStorage.removeItem('vodafone_commission_theme');
   }, []);
 
-  const result = useMemo(() => calculateCommission(input), [input]);
+  const result = useMemo(() => calculateCommission(input, monthConfig), [input, monthConfig]);
 
   const handleReset = () => {
     setInput(initialInput);
@@ -154,63 +193,54 @@ export function CommissionDashboard() {
   };
 
   /**
-   * Generates a complete, high-resolution Full Report PDF using jsPDF.
-   * Ensures all input values, columns, and executive sections are fully captured without cutoffs.
+   * Generates a complete, high-resolution Full Report PDF using jsPDF with all updated features.
    */
   const handleDownloadPDFReport = async () => {
-    const reportElement = document.getElementById('printable-report');
-    if (!reportElement) return;
-
     try {
       setIsExporting(true);
 
-      // Synchronize input attributes so cloned nodes have values
-      const inputs = reportElement.querySelectorAll<HTMLInputElement>('input');
-      inputs.forEach((inp) => {
-        inp.setAttribute('value', inp.value);
-      });
+      // Prefer the dedicated high-resolution template with all updated features
+      const exportElement = document.getElementById('pdf-export-template') || document.getElementById('printable-report');
+      if (!exportElement) return;
 
-      // Temporarily apply full-width export mode
-      reportElement.classList.add('report-export-mode');
-
-      // Wait for layout reflow
+      // Small pause to guarantee DOM and fonts are ready
       await new Promise((resolve) => setTimeout(resolve, 150));
 
-      const exportWidth = 1440;
-      const imgDataUrl = await toPng(reportElement, {
+      const imgDataUrl = await toPng(exportElement, {
         quality: 1,
         pixelRatio: 2,
-        backgroundColor: '#f8fafc',
-        width: exportWidth,
+        backgroundColor: '#ffffff',
+        width: 1400,
         style: {
-          width: `${exportWidth}px`,
-          maxWidth: `${exportWidth}px`,
+          width: '1400px',
+          maxWidth: '1400px',
           overflow: 'visible',
+          opacity: '1',
+          visibility: 'visible',
         },
       });
 
-      // Generate landscape A4 PDF document
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
         format: 'a4',
+        compress: true,
       });
 
       const pageWidth = 297;
       const pageHeight = 210;
-      const margin = 8;
-      const availableWidth = pageWidth - margin * 2; // 281mm
-      const availableHeight = pageHeight - margin * 2; // 194mm
+      const margin = 7;
+      const availableWidth = pageWidth - margin * 2;
+      const availableHeight = pageHeight - margin * 2;
 
       const imgProps = pdf.getImageProperties(imgDataUrl);
       const pdfImgHeight = (imgProps.height * availableWidth) / imgProps.width;
 
       if (pdfImgHeight <= availableHeight) {
-        // Fits on single page
-        const yOffset = margin + (availableHeight - pdfImgHeight) / 3;
+        // Center vertically on A4 landscape page
+        const yOffset = margin + (availableHeight - pdfImgHeight) / 2;
         pdf.addImage(imgDataUrl, 'PNG', margin, yOffset, availableWidth, pdfImgHeight, undefined, 'FAST');
       } else {
-        // Scale to fit available page height
         const scale = availableHeight / pdfImgHeight;
         const scaledWidth = availableWidth * scale;
         const xOffset = margin + (availableWidth - scaledWidth) / 2;
@@ -218,17 +248,15 @@ export function CommissionDashboard() {
       }
 
       const dateStr = new Date().toISOString().slice(0, 10);
-      pdf.save(`vodafone-commission-full-report-${dateStr}.pdf`);
+      pdf.save(`vodafone-commission-report-day-${monthConfig.today}-of-${monthConfig.totalDays}-${dateStr}.pdf`);
     } catch (err) {
       console.error('Failed to export PDF report', err);
     } finally {
-      const reportEl = document.getElementById('printable-report');
-      if (reportEl) {
-        reportEl.classList.remove('report-export-mode');
-      }
       setIsExporting(false);
     }
   };
+
+  const monthProgressPct = Math.min(100, Math.max(0, (monthConfig.today / monthConfig.totalDays) * 100));
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 pb-16 font-sans">
@@ -245,16 +273,12 @@ export function CommissionDashboard() {
                 <h1 className="text-sm sm:text-lg font-extrabold text-slate-900 tracking-tight leading-tight truncate">
                   Commission Calculator
                 </h1>
-                <span className="bg-red-50 text-[#E60000] border border-red-200 text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full shrink-0">
-                  Vodafone
-                </span>
               </div>
               <div className="flex items-center gap-1 text-[10px] sm:text-xs text-slate-500 font-medium truncate">
                 <span className="hidden sm:inline">Made With Love by</span>
                 <span className="sm:hidden">By</span>
                 <span className="font-bold text-slate-800">S3D</span>
                 <span className="text-slate-500">( Qena Store )</span>
-                <Heart className="w-3 h-3 text-[#E60000] fill-[#E60000] inline-block shrink-0 ml-0.5" />
               </div>
             </div>
           </div>
@@ -309,7 +333,7 @@ export function CommissionDashboard() {
                   </span>
                 </div>
                 <p className="text-xs text-slate-600 mt-0.5">
-                  Sales Employee Performance, Weighted Contributions & TNPS Matrix
+                  Sales Employee Performance, Weighted Contributions, VS% & RE% Run-Rate Analysis
                 </p>
               </div>
             </div>
@@ -320,8 +344,96 @@ export function CommissionDashboard() {
                 <Heart className="w-3.5 h-3.5 text-[#E60000] fill-[#E60000]" />
               </div>
               <div className="text-[11px] text-slate-500 mt-1">
-                Report Date: {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                Report Date: {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} • Day {monthConfig.today}/{monthConfig.totalDays}
               </div>
+            </div>
+          </div>
+
+          {/* Executive Run-Rate Print Banner (For standard browser printing) */}
+          <div className="hidden print:flex items-center justify-between bg-slate-50 border border-slate-300 rounded-lg p-2.5 mb-2 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="font-black text-slate-800">Timeline & Run-Rate:</span>
+              <span className="font-bold text-slate-600">Day {monthConfig.today} of {monthConfig.totalDays} ({monthProgressPct.toFixed(1)}% Month Elapsed)</span>
+              <span className="text-slate-400">•</span>
+              <span className="text-slate-600 font-medium">VS% = Actual/Target • RE% = VS% × ({monthConfig.totalDays}/{monthConfig.today})</span>
+            </div>
+            <div className="flex items-center gap-3 font-black">
+              <span className="text-slate-900">VS% Actual: {formatPercentage(result.overall.achievement)}</span>
+              <span className="text-indigo-700">RE% Projected: {formatPercentage(result.overall.re)}</span>
+            </div>
+          </div>
+
+          {/* Month Run-Rate (RE%) Control Bar - Interactive Day and Month Settings */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-3 sm:p-4 shadow-xs flex flex-wrap items-center justify-between gap-3 no-print">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-700 shrink-0">
+                <Calendar className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
+                    Run-Rate Settings (VS% & RE%)
+                  </h2>
+                  <span className="bg-indigo-100 text-indigo-800 text-[10px] font-black px-2 py-0.5 rounded-full">
+                    {monthProgressPct.toFixed(1)}% Month Elapsed
+                  </span>
+                </div>
+                <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium truncate mt-0.5">
+                  <strong className="text-slate-700 font-bold">VS%</strong> = Actual / Target • <strong className="text-indigo-700 font-bold">RE%</strong> = VS% × ({monthConfig.totalDays} / {monthConfig.today})
+                </p>
+              </div>
+            </div>
+
+            {/* Day Controls */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Today Input */}
+              <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
+                <span className="text-[11px] font-bold text-slate-600">Today:</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min="1"
+                  max={monthConfig.totalDays}
+                  value={monthConfig.today}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    if (val > 0) setMonthConfig(prev => ({ ...prev, today: Math.min(val, prev.totalDays) }));
+                  }}
+                  className="w-12 text-center font-black text-xs sm:text-sm text-indigo-950 bg-white border border-slate-300 rounded px-1 py-0.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                  title="Current elapsed day of month (Today)"
+                />
+              </div>
+
+              <span className="text-slate-400 font-bold text-xs">/</span>
+
+              {/* Total Month Days Input */}
+              <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
+                <span className="text-[11px] font-bold text-slate-600">Month Days:</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min="28"
+                  max="31"
+                  value={monthConfig.totalDays}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    if (val >= 28 && val <= 31) setMonthConfig(prev => ({ ...prev, totalDays: val }));
+                  }}
+                  className="w-12 text-center font-black text-xs sm:text-sm text-slate-900 bg-white border border-slate-300 rounded px-1 py-0.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                  title="Total days in this month"
+                />
+              </div>
+
+              {/* Reset to Actual Calendar Day */}
+              <button
+                type="button"
+                onClick={() => setMonthConfig(getInitialMonthConfig())}
+                className="px-2.5 py-1.5 text-xs font-bold text-slate-600 hover:text-indigo-700 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 rounded-lg transition-colors flex items-center gap-1 shadow-2xs"
+                title="Reset to current calendar date"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Auto</span>
+              </button>
             </div>
           </div>
 
@@ -333,7 +445,7 @@ export function CommissionDashboard() {
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-2 sm:mb-4 gap-2">
                   <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white/90 bg-black/20 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md border border-white/20 truncate">
-                    Overall Commission Achievement
+                    Overall Commission & Run-Rate
                   </span>
                   <div className="flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-medium bg-black/25 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md backdrop-blur-xs shrink-0">
                     {result.overall.isComplete ? (
@@ -350,79 +462,103 @@ export function CommissionDashboard() {
                   </div>
                 </div>
 
-                <div className="flex items-baseline gap-2 sm:gap-3 my-1.5 sm:my-3">
-                  <div className="text-3xl sm:text-5xl font-black tracking-tight text-white">
-                    {formatPercentage(result.overall.achievement)}
+                {/* Primary Dual KPI: VS% (Actual) & RE% (Expected EOM) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 my-2 sm:my-3">
+                  {/* VS% Card */}
+                  <div className="bg-black/20 rounded-xl p-2.5 sm:p-3 border border-white/20 shadow-2xs">
+                    <div className="flex items-center justify-between text-white/80 text-[10px] sm:text-xs font-bold mb-0.5">
+                      <span className="text-white font-black">VS% (Actual)</span>
+                      <span className="text-[9px] bg-white/20 px-1.5 py-0.2 rounded text-white">To Date</span>
+                    </div>
+                    <div className="text-2xl sm:text-4xl font-black tracking-tight text-white">
+                      {formatPercentage(result.overall.achievement)}
+                    </div>
+                    <div className="text-[10px] text-white/80 mt-0.5 truncate font-medium">
+                      Actual Achieved / Assigned Target
+                    </div>
                   </div>
-                  <div className="text-xs sm:text-sm text-white/80 font-medium">
-                    {result.overall.achievement !== null && result.overall.achievement >= 100 ? (
-                      <span className="bg-white/20 text-white font-bold px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs">
-                        Target Met & Exceeded
+
+                  {/* RE% Card */}
+                  <div className="bg-black/25 rounded-xl p-2.5 sm:p-3 border border-white/25 shadow-2xs">
+                    <div className="flex items-center justify-between text-white/90 text-[10px] sm:text-xs font-bold mb-0.5">
+                      <span className="text-amber-200 font-black">RE% (Expected EOM)</span>
+                      <span className="bg-amber-400 text-amber-950 font-black text-[9px] px-1.5 py-0.2 rounded">
+                        Projected
                       </span>
-                    ) : (
-                      <span>Total Weighted Contribution</span>
-                    )}
+                    </div>
+                    <div className="text-2xl sm:text-4xl font-black tracking-tight text-amber-200">
+                      {formatPercentage(result.overall.re)}
+                    </div>
+                    <div className="text-[10px] text-white/80 mt-0.5 truncate font-medium">
+                      Projected at Day {monthConfig.today} of {monthConfig.totalDays}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Category breakdown boxes */}
-              <div className="relative z-10 pt-2.5 sm:pt-4 mt-2 sm:mt-4 border-t border-white/20 grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2.5 text-xs">
+              {/* Category breakdown boxes with both VS and RE */}
+              <div className="relative z-10 pt-2 sm:pt-3 mt-1 sm:mt-2 border-t border-white/20 grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2.5 text-xs">
                 {/* Acquisition */}
                 <div className="bg-black/20 hover:bg-black/30 rounded-xl p-2 sm:p-2.5 border border-white/15 shadow-xs transition-colors backdrop-blur-xs">
-                  <div className="flex items-center gap-1.5 text-white/80 text-[9px] sm:text-[10px] font-bold truncate">
+                  <div className="flex items-center gap-1 text-white/80 text-[9px] sm:text-[10px] font-bold truncate">
                     <Zap className="w-3 h-3 text-white/80 shrink-0" />
                     <span>Acquisition (60%)</span>
                   </div>
-                  <div className="text-sm sm:text-base font-black mt-0.5 sm:mt-1 text-white">
-                    {formatPercentage(result.acquisition.total.contribution)}
+                  <div className="flex items-baseline gap-1 mt-0.5 sm:mt-1">
+                    <span className="text-xs sm:text-sm font-black text-white">
+                      VS: {formatPercentage(result.acquisition.total.contribution)}
+                    </span>
                   </div>
-                  <div className="text-[9px] text-white/70 font-medium truncate mt-0.5">
-                    {result.acquisition.totalTarget !== null || result.acquisition.totalActual !== null
-                      ? `Sum: ${result.acquisition.totalActual ?? 0} / ${result.acquisition.totalTarget ?? 0} Pts`
-                      : 'Low • High • Cash'}
+                  <div className="text-[10px] font-bold text-amber-200 truncate">
+                    RE: {formatPercentage(result.acquisition.total.re !== null && result.acquisition.total.re !== undefined ? result.acquisition.total.re * 0.60 : null)}
                   </div>
                 </div>
 
                 {/* Enterprise */}
                 <div className="bg-black/20 hover:bg-black/30 rounded-xl p-2 sm:p-2.5 border border-white/15 shadow-xs transition-colors backdrop-blur-xs">
-                  <div className="flex items-center gap-1.5 text-white/80 text-[9px] sm:text-[10px] font-bold truncate">
+                  <div className="flex items-center gap-1 text-white/80 text-[9px] sm:text-[10px] font-bold truncate">
                     <Building2 className="w-3 h-3 text-white/80 shrink-0" />
                     <span>Enterprise (10%)</span>
                   </div>
-                  <div className="text-sm sm:text-base font-black mt-0.5 sm:mt-1 text-white">
-                    {formatPercentage(result.enterprise.totalContribution)}
+                  <div className="flex items-baseline gap-1 mt-0.5 sm:mt-1">
+                    <span className="text-xs sm:text-sm font-black text-white">
+                      VS: {formatPercentage(result.enterprise.totalContribution)}
+                    </span>
                   </div>
-                  <div className="text-[9px] text-white/70 font-medium truncate mt-0.5">
-                    Accounts 5% • Lines 5%
+                  <div className="text-[10px] font-bold text-amber-200 truncate">
+                    RE: {formatPercentage(result.enterprise.totalRE)}
                   </div>
                 </div>
 
                 {/* Terminal */}
                 <div className="bg-black/20 hover:bg-black/30 rounded-xl p-2 sm:p-2.5 border border-white/15 shadow-xs transition-colors backdrop-blur-xs">
-                  <div className="flex items-center gap-1.5 text-white/80 text-[9px] sm:text-[10px] font-bold truncate">
+                  <div className="flex items-center gap-1 text-white/80 text-[9px] sm:text-[10px] font-bold truncate">
                     <Smartphone className="w-3 h-3 text-white/80 shrink-0" />
                     <span>Terminal (10%)</span>
                   </div>
-                  <div className="text-sm sm:text-base font-black mt-0.5 sm:mt-1 text-white">
-                    {formatPercentage(result.terminal.contribution)}
+                  <div className="flex items-baseline gap-1 mt-0.5 sm:mt-1">
+                    <span className="text-xs sm:text-sm font-black text-white">
+                      VS: {formatPercentage(result.terminal.contribution)}
+                    </span>
                   </div>
-                  <div className="text-[9px] text-white/70 font-medium truncate mt-0.5">
-                    Sales Value
+                  <div className="text-[10px] font-bold text-amber-200 truncate">
+                    RE: {formatPercentage(result.terminal.re !== null && result.terminal.re !== undefined ? result.terminal.re * 0.10 : null)}
                   </div>
                 </div>
 
                 {/* Fixed */}
                 <div className="bg-black/20 hover:bg-black/30 rounded-xl p-2 sm:p-2.5 border border-white/15 shadow-xs transition-colors backdrop-blur-xs">
-                  <div className="flex items-center gap-1.5 text-white/80 text-[9px] sm:text-[10px] font-bold truncate">
+                  <div className="flex items-center gap-1 text-white/80 text-[9px] sm:text-[10px] font-bold truncate">
                     <Wifi className="w-3 h-3 text-white/80 shrink-0" />
                     <span>Fixed (20%)</span>
                   </div>
-                  <div className="text-sm sm:text-base font-black mt-0.5 sm:mt-1 text-white">
-                    {formatPercentage(result.fixed.totalContribution)}
+                  <div className="flex items-baseline gap-1 mt-0.5 sm:mt-1">
+                    <span className="text-xs sm:text-sm font-black text-white">
+                      VS: {formatPercentage(result.fixed.totalContribution)}
+                    </span>
                   </div>
-                  <div className="text-[9px] text-white/70 font-medium truncate mt-0.5">
-                    DSL 16% • Conn 4%
+                  <div className="text-[10px] font-bold text-amber-200 truncate">
+                    RE: {formatPercentage(result.fixed.totalRE)}
                   </div>
                 </div>
               </div>
@@ -442,7 +578,7 @@ export function CommissionDashboard() {
             </div>
           </section>
 
-          {/* View Mode Switcher for Mobile & Desktop */}
+          {/* View Mode Switcher */}
           <div className="flex items-center justify-between gap-2 pt-1 no-print">
             <div className="flex items-center gap-1 p-1 bg-slate-200/80 rounded-xl">
               <button
@@ -473,17 +609,11 @@ export function CommissionDashboard() {
                 <span>Full Table</span>
               </button>
             </div>
-
-            <div className="text-xs text-slate-500 font-medium hidden sm:block">
-              {viewMode === 'cards' ? 'Touch-optimized cards layout' : 'Comprehensive 9-column grid layout'}
-            </div>
           </div>
 
-          {/* MAIN DATA INPUT SECTION:
-              - Mobile Cards View: Friendly cards for touchscreens
-              - Full Matrix Table View: Full desktop matrix table */}
+          {/* MAIN DATA INPUT SECTION */}
           <section aria-labelledby="matrix-section">
-            {/* 1. Mobile Cards View (Visible when viewMode === 'cards', hidden in print/export) */}
+            {/* 1. Mobile Cards View */}
             <div className={viewMode === 'cards' ? 'block print:hidden report-hide-on-export' : 'hidden print:hidden report-hide-on-export'}>
               <MobileCommissionCards
                 input={input}
@@ -494,7 +624,7 @@ export function CommissionDashboard() {
               />
             </div>
 
-            {/* 2. Full Matrix Table View (Visible when viewMode === 'table', ALWAYS visible in print & PDF export) */}
+            {/* 2. Full Table View */}
             <div className={viewMode === 'table' ? 'block' : 'hidden print:block report-show-on-export'}>
               <CommissionMatrix 
                 input={input}
@@ -506,39 +636,44 @@ export function CommissionDashboard() {
             </div>
           </section>
 
-          {/* Report Footer - Included in PDF, PNG export and Print */}
+          {/* Report Footer */}
           <div className="hidden print:flex report-export-header items-center justify-between border-t border-slate-200 pt-3 text-[11px] text-slate-500">
             <div>Vodafone Store Performance & Commission Tracking • Confidential</div>
-            <div>Generated with Vodafone Commission Calculator</div>
+            <div>Generated with Vodafone Commission Calculator • VS% & RE% Active</div>
           </div>
         </div>
 
       </main>
 
-      {/* Mobile Floating Bottom Bar - Sticky status for the 90% mobile users */}
+      {/* Mobile Floating Bottom Bar - Sticky status with VS% and RE% */}
       <aside aria-label="Mobile summary" className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 px-3 py-2 shadow-lg flex items-center justify-between gap-2 no-print">
         <div className="flex items-center gap-2 min-w-0">
           <div className="w-2.5 h-2.5 rounded-full bg-[#E60000] shrink-0" />
-          <div className="min-w-0">
-            <div className="text-[10px] text-slate-500 font-semibold truncate leading-none">
-              Overall Achievement
+          <div className="flex items-center gap-2 min-w-0">
+            <div>
+              <div className="text-[9px] text-slate-500 font-bold leading-none uppercase">
+                VS%
+              </div>
+              <div className="text-sm font-black text-slate-900 leading-tight">
+                {formatPercentage(result.overall.achievement)}
+              </div>
             </div>
-            <div className="text-base font-black text-[#E60000] leading-tight">
-              {formatPercentage(result.overall.achievement)}
+            <span className="text-slate-300 font-bold">•</span>
+            <div>
+              <div className="text-[9px] text-indigo-600 font-bold leading-none uppercase">
+                RE%
+              </div>
+              <div className="text-sm font-black text-indigo-700 leading-tight">
+                {formatPercentage(result.overall.re)}
+              </div>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
-          {result.overall.achievement !== null && result.overall.achievement >= 100 ? (
-            <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-2 py-1 rounded-md">
-              Target Met
-            </span>
-          ) : (
-            <span className="bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-1 rounded-md">
-              {result.overall.isComplete ? 'Complete' : 'In Progress'}
-            </span>
-          )}
+          <span className="text-[9px] font-bold text-slate-500 bg-slate-100 px-1.5 py-1 rounded">
+            Day {monthConfig.today}/{monthConfig.totalDays}
+          </span>
 
           <button
             type="button"
@@ -551,6 +686,29 @@ export function CommissionDashboard() {
           </button>
         </div>
       </aside>
+
+      {/* Offscreen High-Resolution PDF Export Template with All Updated Features */}
+      <div
+        style={{
+          position: 'fixed',
+          left: '-99999px',
+          top: '0',
+          width: '1400px',
+          zIndex: -9999,
+          pointerEvents: 'none',
+          opacity: 0,
+        }}
+        aria-hidden="true"
+      >
+        <div id="pdf-export-template">
+          <PDFReportTemplate
+            input={input}
+            result={result}
+            monthConfig={monthConfig}
+            acqNote={acqNote}
+          />
+        </div>
+      </div>
     </div>
   );
 }
