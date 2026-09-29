@@ -24,7 +24,8 @@ import {
   Calendar,
   RotateCcw,
   TrendingUp,
-  Percent
+  Percent,
+  User
 } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
@@ -52,6 +53,7 @@ const COMMISSION_STORAGE_KEY = 'vodafone_commission_input_v2';
 const LEGACY_COMMISSION_STORAGE_KEY = 'vodafone_commission_input_v1';
 const ACQ_NOTE_STORAGE_KEY = 'vodafone_acq_note_v2';
 const MONTH_CONFIG_STORAGE_KEY = 'vodafone_commission_month_config_v1';
+const AGENT_NAME_STORAGE_KEY = 'vodafone_agent_name_v1';
 const DEFAULT_ACQ_NOTE = "Must Get 90% of High GA's to not lose any Over in Low GA's";
 
 const parseComp = (comp?: any, fbT: number | null = null, fbA: number | null = null): ComponentInput => ({
@@ -150,6 +152,25 @@ export function CommissionDashboard() {
       localStorage.setItem(ACQ_NOTE_STORAGE_KEY, val);
     } catch (err) {
       console.error('Error saving acquisition note:', err);
+    }
+  };
+
+  // Agent name or Store name state with localStorage persistence
+  const [agentName, setAgentName] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    try {
+      return localStorage.getItem(AGENT_NAME_STORAGE_KEY) || '';
+    } catch {
+      return '';
+    }
+  });
+
+  const handleAgentNameChange = (val: string) => {
+    setAgentName(val);
+    try {
+      localStorage.setItem(AGENT_NAME_STORAGE_KEY, val);
+    } catch (err) {
+      console.error('Error saving agent name:', err);
     }
   };
 
@@ -343,6 +364,12 @@ export function CommissionDashboard() {
                 <span className="text-[#E60000]">S3D ( Qena Store )</span>
                 <Heart className="w-3.5 h-3.5 text-[#E60000] fill-[#E60000]" />
               </div>
+              {agentName && agentName.trim() ? (
+                <div className="text-xs font-bold text-slate-800 mt-0.5">
+                  <span>Agent / Store: </span>
+                  <span className="text-[#E60000] font-bold">{agentName}</span>
+                </div>
+              ) : null}
               <div className="text-[11px] text-slate-500 mt-1">
                 Report Date: {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} • Day {monthConfig.today}/{monthConfig.totalDays}
               </div>
@@ -363,7 +390,7 @@ export function CommissionDashboard() {
             </div>
           </div>
 
-          {/* Month Run-Rate (RE%) Control Bar - Interactive Day and Month Settings */}
+          {/* Month Run-Rate (RE%) Control Bar - Interactive Day, Name and Month Settings */}
           <div className="bg-white border border-slate-200 rounded-2xl p-3 sm:p-4 shadow-xs flex flex-wrap items-center justify-between gap-3 no-print">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-700 shrink-0">
@@ -384,54 +411,69 @@ export function CommissionDashboard() {
               </div>
             </div>
 
-            {/* Day Controls */}
-            <div className="flex items-center gap-2 flex-wrap">
-              {/* Today Input */}
-              <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
-                <span className="text-[11px] font-bold text-slate-600">Today:</span>
+            {/* Controls: Name, Today, Month Days, Auto */}
+            <div className="flex items-center gap-2.5 flex-wrap">
+              {/* Store / Agent Name Box */}
+              <div className="h-10 flex items-center gap-2 bg-slate-50 hover:bg-white border border-slate-200 focus-within:border-[#E60000] focus-within:ring-2 focus-within:ring-red-100 rounded-xl px-3 transition-all shadow-2xs">
+                <User className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                <span className="text-[11px] font-bold text-slate-600 shrink-0">Name:</span>
                 <input
-                  type="number"
-                  inputMode="numeric"
-                  min="1"
-                  max={monthConfig.totalDays}
-                  value={monthConfig.today}
-                  onChange={(e) => {
-                    const val = Number(e.target.value);
-                    if (val > 0) setMonthConfig(prev => ({ ...prev, today: Math.min(val, prev.totalDays) }));
-                  }}
-                  className="w-12 text-center font-black text-xs sm:text-sm text-indigo-950 bg-white border border-slate-300 rounded px-1 py-0.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                  title="Current elapsed day of month (Today)"
+                  type="text"
+                  placeholder="Store or Agent Name"
+                  value={agentName}
+                  onChange={(e) => handleAgentNameChange(e.target.value)}
+                  className="w-32 sm:w-44 font-bold text-xs text-slate-900 bg-transparent border-none outline-none focus:outline-none placeholder:text-slate-400 placeholder:font-normal"
+                  title="Store name or Agent name (included in PDF)"
                 />
               </div>
 
-              <span className="text-slate-400 font-bold text-xs">/</span>
+              {/* Day & Month Progress Controls (Unified Equal Box) */}
+              <div className="h-10 flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 shadow-2xs">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] font-bold text-slate-600">Today:</span>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min="1"
+                    max={monthConfig.totalDays}
+                    value={monthConfig.today}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      if (val > 0) setMonthConfig(prev => ({ ...prev, today: Math.min(val, prev.totalDays) }));
+                    }}
+                    className="w-11 text-center font-black text-xs text-indigo-950 bg-white border border-slate-300 rounded-lg py-1 px-1 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    title="Current elapsed day of month (Today)"
+                  />
+                </div>
 
-              {/* Total Month Days Input */}
-              <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
-                <span className="text-[11px] font-bold text-slate-600">Month Days:</span>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  min="28"
-                  max="31"
-                  value={monthConfig.totalDays}
-                  onChange={(e) => {
-                    const val = Number(e.target.value);
-                    if (val >= 28 && val <= 31) setMonthConfig(prev => ({ ...prev, totalDays: val }));
-                  }}
-                  className="w-12 text-center font-black text-xs sm:text-sm text-slate-900 bg-white border border-slate-300 rounded px-1 py-0.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                  title="Total days in this month"
-                />
+                <span className="text-slate-400 font-bold text-xs">/</span>
+
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] font-bold text-slate-600">Month:</span>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min="28"
+                    max="31"
+                    value={monthConfig.totalDays}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      if (val >= 28 && val <= 31) setMonthConfig(prev => ({ ...prev, totalDays: val }));
+                    }}
+                    className="w-11 text-center font-black text-xs text-slate-900 bg-white border border-slate-300 rounded-lg py-1 px-1 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    title="Total days in this month"
+                  />
+                </div>
               </div>
 
-              {/* Reset to Actual Calendar Day */}
+              {/* Reset to Actual Calendar Day Button */}
               <button
                 type="button"
                 onClick={() => setMonthConfig(getInitialMonthConfig())}
-                className="px-2.5 py-1.5 text-xs font-bold text-slate-600 hover:text-indigo-700 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 rounded-lg transition-colors flex items-center gap-1 shadow-2xs"
+                className="h-10 px-3 text-xs font-bold text-slate-700 hover:text-indigo-700 bg-slate-50 hover:bg-indigo-50/80 border border-slate-200 hover:border-indigo-300 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs shrink-0 cursor-pointer active:scale-95"
                 title="Reset to current calendar date"
               >
-                <RotateCcw className="w-3.5 h-3.5" />
+                <RotateCcw className="w-3.5 h-3.5 text-indigo-600" />
                 <span>Auto</span>
               </button>
             </div>
@@ -465,31 +507,31 @@ export function CommissionDashboard() {
                 {/* Primary Dual KPI: VS% (Actual) & RE% (Expected EOM) */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 my-2 sm:my-3">
                   {/* VS% Card */}
-                  <div className="bg-black/20 rounded-xl p-2.5 sm:p-3 border border-white/20 shadow-2xs">
-                    <div className="flex items-center justify-between text-white/80 text-[10px] sm:text-xs font-bold mb-0.5">
+                  <div className="bg-black/25 rounded-xl p-3 sm:p-3.5 border border-white/20 shadow-2xs h-full min-h-[110px] flex flex-col justify-between">
+                    <div className="flex items-center justify-between text-white/90 text-[10px] sm:text-xs font-bold mb-0.5">
                       <span className="text-white font-black">VS% (Actual)</span>
-                      <span className="text-[9px] bg-white/20 px-1.5 py-0.2 rounded text-white">To Date</span>
+                      <span className="text-[9px] bg-white/20 px-2 py-0.5 rounded font-bold text-white">To Date</span>
                     </div>
-                    <div className="text-2xl sm:text-4xl font-black tracking-tight text-white">
+                    <div className="text-2xl sm:text-4xl font-black tracking-tight text-white my-1">
                       {formatPercentage(result.overall.achievement)}
                     </div>
-                    <div className="text-[10px] text-white/80 mt-0.5 truncate font-medium">
+                    <div className="text-[10px] text-white/80 truncate font-medium">
                       Actual Achieved / Assigned Target
                     </div>
                   </div>
 
                   {/* RE% Card */}
-                  <div className="bg-black/25 rounded-xl p-2.5 sm:p-3 border border-white/25 shadow-2xs">
+                  <div className="bg-black/25 rounded-xl p-3 sm:p-3.5 border border-white/25 shadow-2xs h-full min-h-[110px] flex flex-col justify-between">
                     <div className="flex items-center justify-between text-white/90 text-[10px] sm:text-xs font-bold mb-0.5">
                       <span className="text-amber-200 font-black">RE% (Expected EOM)</span>
-                      <span className="bg-amber-400 text-amber-950 font-black text-[9px] px-1.5 py-0.2 rounded">
+                      <span className="bg-amber-400 text-amber-950 font-black text-[9px] px-2 py-0.5 rounded">
                         Projected
                       </span>
                     </div>
-                    <div className="text-2xl sm:text-4xl font-black tracking-tight text-amber-200">
+                    <div className="text-2xl sm:text-4xl font-black tracking-tight text-amber-200 my-1">
                       {formatPercentage(result.overall.re)}
                     </div>
-                    <div className="text-[10px] text-white/80 mt-0.5 truncate font-medium">
+                    <div className="text-[10px] text-white/80 truncate font-medium">
                       Projected at Day {monthConfig.today} of {monthConfig.totalDays}
                     </div>
                   </div>
@@ -497,68 +539,104 @@ export function CommissionDashboard() {
               </div>
 
               {/* Category breakdown boxes with both VS and RE */}
-              <div className="relative z-10 pt-2 sm:pt-3 mt-1 sm:mt-2 border-t border-white/20 grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2.5 text-xs">
+              <div className="relative z-10 pt-2.5 sm:pt-3 mt-1 sm:mt-2 border-t border-white/20 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5 text-xs">
                 {/* Acquisition */}
-                <div className="bg-black/20 hover:bg-black/30 rounded-xl p-2 sm:p-2.5 border border-white/15 shadow-xs transition-colors backdrop-blur-xs">
-                  <div className="flex items-center gap-1 text-white/80 text-[9px] sm:text-[10px] font-bold truncate">
-                    <Zap className="w-3 h-3 text-white/80 shrink-0" />
-                    <span>Acquisition (60%)</span>
+                <div className="bg-black/25 hover:bg-black/30 rounded-xl p-2.5 border border-white/15 shadow-xs transition-colors backdrop-blur-xs flex flex-col justify-between h-full min-h-[96px]">
+                  <div className="flex items-center justify-between gap-1 text-white/95 text-[11px] font-bold pb-1 border-b border-white/15">
+                    <div className="flex items-center gap-1.5 truncate">
+                      <Zap className="w-3.5 h-3.5 text-white/90 shrink-0" />
+                      <span className="truncate">Acquisition</span>
+                    </div>
+                    <span className="text-[10px] bg-white/20 px-1.5 py-0.2 rounded font-bold text-white shrink-0">60%</span>
                   </div>
-                  <div className="flex items-baseline gap-1 mt-0.5 sm:mt-1">
-                    <span className="text-xs sm:text-sm font-black text-white">
-                      VS: {formatPercentage(result.acquisition.total.contribution)}
-                    </span>
-                  </div>
-                  <div className="text-[10px] font-bold text-amber-200 truncate">
-                    RE: {formatPercentage(result.acquisition.total.re !== null && result.acquisition.total.re !== undefined ? result.acquisition.total.re * 0.60 : null)}
+                  <div className="grid grid-cols-2 gap-1.5 mt-2">
+                    <div className="bg-white/10 rounded-lg p-1.5 text-center border border-white/10">
+                      <span className="text-[8px] sm:text-[9px] uppercase font-bold text-white/80 block">VS%</span>
+                      <span className="text-xs sm:text-sm font-black text-white block mt-0.5 leading-tight">
+                        {formatPercentage(result.acquisition.total.contribution)}
+                      </span>
+                    </div>
+                    <div className="bg-black/30 rounded-lg p-1.5 text-center border border-white/15">
+                      <span className="text-[8px] sm:text-[9px] uppercase font-bold text-amber-300 block">RE%</span>
+                      <span className="text-xs sm:text-sm font-black text-amber-200 block mt-0.5 leading-tight">
+                        {formatPercentage(result.acquisition.total.re !== null && result.acquisition.total.re !== undefined ? result.acquisition.total.re * 0.60 : null)}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
                 {/* Enterprise */}
-                <div className="bg-black/20 hover:bg-black/30 rounded-xl p-2 sm:p-2.5 border border-white/15 shadow-xs transition-colors backdrop-blur-xs">
-                  <div className="flex items-center gap-1 text-white/80 text-[9px] sm:text-[10px] font-bold truncate">
-                    <Building2 className="w-3 h-3 text-white/80 shrink-0" />
-                    <span>Enterprise (10%)</span>
+                <div className="bg-black/25 hover:bg-black/30 rounded-xl p-2.5 border border-white/15 shadow-xs transition-colors backdrop-blur-xs flex flex-col justify-between h-full min-h-[96px]">
+                  <div className="flex items-center justify-between gap-1 text-white/95 text-[11px] font-bold pb-1 border-b border-white/15">
+                    <div className="flex items-center gap-1.5 truncate">
+                      <Building2 className="w-3.5 h-3.5 text-white/90 shrink-0" />
+                      <span className="truncate">Enterprise</span>
+                    </div>
+                    <span className="text-[10px] bg-white/20 px-1.5 py-0.2 rounded font-bold text-white shrink-0">10%</span>
                   </div>
-                  <div className="flex items-baseline gap-1 mt-0.5 sm:mt-1">
-                    <span className="text-xs sm:text-sm font-black text-white">
-                      VS: {formatPercentage(result.enterprise.totalContribution)}
-                    </span>
-                  </div>
-                  <div className="text-[10px] font-bold text-amber-200 truncate">
-                    RE: {formatPercentage(result.enterprise.totalRE)}
+                  <div className="grid grid-cols-2 gap-1.5 mt-2">
+                    <div className="bg-white/10 rounded-lg p-1.5 text-center border border-white/10">
+                      <span className="text-[8px] sm:text-[9px] uppercase font-bold text-white/80 block">VS%</span>
+                      <span className="text-xs sm:text-sm font-black text-white block mt-0.5 leading-tight">
+                        {formatPercentage(result.enterprise.totalContribution)}
+                      </span>
+                    </div>
+                    <div className="bg-black/30 rounded-lg p-1.5 text-center border border-white/15">
+                      <span className="text-[8px] sm:text-[9px] uppercase font-bold text-amber-300 block">RE%</span>
+                      <span className="text-xs sm:text-sm font-black text-amber-200 block mt-0.5 leading-tight">
+                        {formatPercentage(result.enterprise.totalRE)}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
                 {/* Terminal */}
-                <div className="bg-black/20 hover:bg-black/30 rounded-xl p-2 sm:p-2.5 border border-white/15 shadow-xs transition-colors backdrop-blur-xs">
-                  <div className="flex items-center gap-1 text-white/80 text-[9px] sm:text-[10px] font-bold truncate">
-                    <Smartphone className="w-3 h-3 text-white/80 shrink-0" />
-                    <span>Terminal (10%)</span>
+                <div className="bg-black/25 hover:bg-black/30 rounded-xl p-2.5 border border-white/15 shadow-xs transition-colors backdrop-blur-xs flex flex-col justify-between h-full min-h-[96px]">
+                  <div className="flex items-center justify-between gap-1 text-white/95 text-[11px] font-bold pb-1 border-b border-white/15">
+                    <div className="flex items-center gap-1.5 truncate">
+                      <Smartphone className="w-3.5 h-3.5 text-white/90 shrink-0" />
+                      <span className="truncate">Terminal</span>
+                    </div>
+                    <span className="text-[10px] bg-white/20 px-1.5 py-0.2 rounded font-bold text-white shrink-0">10%</span>
                   </div>
-                  <div className="flex items-baseline gap-1 mt-0.5 sm:mt-1">
-                    <span className="text-xs sm:text-sm font-black text-white">
-                      VS: {formatPercentage(result.terminal.contribution)}
-                    </span>
-                  </div>
-                  <div className="text-[10px] font-bold text-amber-200 truncate">
-                    RE: {formatPercentage(result.terminal.re !== null && result.terminal.re !== undefined ? result.terminal.re * 0.10 : null)}
+                  <div className="grid grid-cols-2 gap-1.5 mt-2">
+                    <div className="bg-white/10 rounded-lg p-1.5 text-center border border-white/10">
+                      <span className="text-[8px] sm:text-[9px] uppercase font-bold text-white/80 block">VS%</span>
+                      <span className="text-xs sm:text-sm font-black text-white block mt-0.5 leading-tight">
+                        {formatPercentage(result.terminal.contribution)}
+                      </span>
+                    </div>
+                    <div className="bg-black/30 rounded-lg p-1.5 text-center border border-white/15">
+                      <span className="text-[8px] sm:text-[9px] uppercase font-bold text-amber-300 block">RE%</span>
+                      <span className="text-xs sm:text-sm font-black text-amber-200 block mt-0.5 leading-tight">
+                        {formatPercentage(result.terminal.re !== null && result.terminal.re !== undefined ? result.terminal.re * 0.10 : null)}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
                 {/* Fixed */}
-                <div className="bg-black/20 hover:bg-black/30 rounded-xl p-2 sm:p-2.5 border border-white/15 shadow-xs transition-colors backdrop-blur-xs">
-                  <div className="flex items-center gap-1 text-white/80 text-[9px] sm:text-[10px] font-bold truncate">
-                    <Wifi className="w-3 h-3 text-white/80 shrink-0" />
-                    <span>Fixed (20%)</span>
+                <div className="bg-black/25 hover:bg-black/30 rounded-xl p-2.5 border border-white/15 shadow-xs transition-colors backdrop-blur-xs flex flex-col justify-between h-full min-h-[96px]">
+                  <div className="flex items-center justify-between gap-1 text-white/95 text-[11px] font-bold pb-1 border-b border-white/15">
+                    <div className="flex items-center gap-1.5 truncate">
+                      <Wifi className="w-3.5 h-3.5 text-white/90 shrink-0" />
+                      <span className="truncate">Fixed</span>
+                    </div>
+                    <span className="text-[10px] bg-white/20 px-1.5 py-0.2 rounded font-bold text-white shrink-0">20%</span>
                   </div>
-                  <div className="flex items-baseline gap-1 mt-0.5 sm:mt-1">
-                    <span className="text-xs sm:text-sm font-black text-white">
-                      VS: {formatPercentage(result.fixed.totalContribution)}
-                    </span>
-                  </div>
-                  <div className="text-[10px] font-bold text-amber-200 truncate">
-                    RE: {formatPercentage(result.fixed.totalRE)}
+                  <div className="grid grid-cols-2 gap-1.5 mt-2">
+                    <div className="bg-white/10 rounded-lg p-1.5 text-center border border-white/10">
+                      <span className="text-[8px] sm:text-[9px] uppercase font-bold text-white/80 block">VS%</span>
+                      <span className="text-xs sm:text-sm font-black text-white block mt-0.5 leading-tight">
+                        {formatPercentage(result.fixed.totalContribution)}
+                      </span>
+                    </div>
+                    <div className="bg-black/30 rounded-lg p-1.5 text-center border border-white/15">
+                      <span className="text-[8px] sm:text-[9px] uppercase font-bold text-amber-300 block">RE%</span>
+                      <span className="text-xs sm:text-sm font-black text-amber-200 block mt-0.5 leading-tight">
+                        {formatPercentage(result.fixed.totalRE)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -706,6 +784,7 @@ export function CommissionDashboard() {
             result={result}
             monthConfig={monthConfig}
             acqNote={acqNote}
+            agentName={agentName}
           />
         </div>
       </div>

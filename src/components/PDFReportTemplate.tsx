@@ -22,6 +22,7 @@ interface PDFReportTemplateProps {
   result: CommissionResult;
   monthConfig: MonthProgressConfig;
   acqNote: string;
+  agentName?: string;
 }
 
 export function PDFReportTemplate({
@@ -29,6 +30,7 @@ export function PDFReportTemplate({
   result,
   monthConfig,
   acqNote,
+  agentName,
 }: PDFReportTemplateProps) {
   const monthProgressPct = Math.min(100, Math.max(0, (monthConfig.today / monthConfig.totalDays) * 100));
   const currentDate = new Date().toLocaleDateString('en-GB', {
@@ -83,6 +85,12 @@ export function PDFReportTemplate({
             <span>Made With Love by</span>
             <span className="text-[#E60000] font-black">S3D ( Qena Store )</span>
           </div>
+          {agentName && agentName.trim() ? (
+            <div className="text-xs font-bold text-slate-800 mt-0.5">
+              <span>Agent / Store: </span>
+              <span className="text-[#E60000] font-black">{agentName}</span>
+            </div>
+          ) : null}
           <div className="text-[11px] text-slate-500 font-semibold mt-1">
             Report Date: {currentDate} • Timeline: Day {monthConfig.today} of {monthConfig.totalDays} ({monthProgressPct.toFixed(1)}% Elapsed)
           </div>
@@ -160,31 +168,31 @@ export function PDFReportTemplate({
             {/* Primary Dual KPI: VS% (Actual) & RE% (Expected EOM) */}
             <div className="grid grid-cols-2 gap-3 my-1.5">
               {/* VS% Card */}
-              <div className="bg-black/25 rounded-lg p-2.5 border border-white/20">
+              <div className="bg-black/25 rounded-xl p-3 border border-white/20 h-full min-h-[100px] flex flex-col justify-between">
                 <div className="flex items-center justify-between text-white/90 text-xs font-bold mb-0.5">
                   <span className="text-white font-black">VS% (Actual Achieved)</span>
-                  <span className="text-[9px] bg-white/20 px-1.5 py-0.5 rounded text-white font-bold">To Date</span>
+                  <span className="text-[9px] bg-white/20 px-2 py-0.5 rounded text-white font-bold">To Date</span>
                 </div>
-                <div className="text-3xl font-black tracking-tight text-white">
+                <div className="text-3xl font-black tracking-tight text-white my-0.5">
                   {formatPercentage(result.overall.achievement)}
                 </div>
-                <div className="text-[10px] text-white/80 mt-0.5 font-medium">
+                <div className="text-[10px] text-white/80 font-medium">
                   Delivered Result / Assigned Target
                 </div>
               </div>
 
               {/* RE% Card */}
-              <div className="bg-black/30 rounded-lg p-2.5 border border-white/25">
+              <div className="bg-black/25 rounded-xl p-3 border border-white/25 h-full min-h-[100px] flex flex-col justify-between">
                 <div className="flex items-center justify-between text-white/90 text-xs font-bold mb-0.5">
                   <span className="text-amber-200 font-black">RE% (Projected Month-End)</span>
-                  <span className="bg-amber-400 text-amber-950 font-black text-[9px] px-1.5 py-0.5 rounded">
+                  <span className="bg-amber-400 text-amber-950 font-black text-[9px] px-2 py-0.5 rounded">
                     Expected
                   </span>
                 </div>
-                <div className="text-3xl font-black tracking-tight text-amber-200">
+                <div className="text-3xl font-black tracking-tight text-amber-200 my-0.5">
                   {formatPercentage(result.overall.re)}
                 </div>
-                <div className="text-[10px] text-white/80 mt-0.5 font-medium">
+                <div className="text-[10px] text-white/80 font-medium">
                   Projected at Day {monthConfig.today} of {monthConfig.totalDays}
                 </div>
               </div>
@@ -194,58 +202,102 @@ export function PDFReportTemplate({
           {/* Category breakdown boxes with both VS and RE */}
           <div className="relative z-10 pt-2 border-t border-white/20 grid grid-cols-4 gap-2 text-xs">
             {/* Acquisition */}
-            <div className="bg-black/25 rounded-lg p-2 border border-white/15">
-              <div className="flex items-center gap-1 text-white/90 text-[10px] font-bold">
-                <Zap className="w-3 h-3 text-white/80 shrink-0" />
-                <span>Acquisition (60%)</span>
+            <div className="bg-black/25 rounded-xl p-2.5 border border-white/15 flex flex-col justify-between h-full min-h-[90px]">
+              <div className="flex items-center justify-between pb-1 border-b border-white/15">
+                <div className="flex items-center gap-1.5 text-white/95 text-[11px] font-bold">
+                  <Zap className="w-3.5 h-3.5 text-white/90 shrink-0" />
+                  <span>Acquisition</span>
+                </div>
+                <span className="text-[9px] bg-white/20 px-1.5 py-0.2 rounded font-bold text-white">60%</span>
               </div>
-              <div className="mt-0.5 text-xs font-black text-white">
-                VS: {formatPercentage(result.acquisition.total.contribution)}
-              </div>
-              <div className="text-[10px] font-bold text-amber-200">
-                RE: {formatPercentage(result.acquisition.total.re !== null && result.acquisition.total.re !== undefined ? result.acquisition.total.re * 0.60 : null)}
+              <div className="grid grid-cols-2 gap-1.5 mt-1.5">
+                <div className="bg-white/10 rounded-lg p-1 text-center border border-white/10">
+                  <span className="text-[8px] uppercase font-bold text-white/80 block">VS%</span>
+                  <span className="text-xs font-black text-white block mt-0.5 leading-tight">
+                    {formatPercentage(result.acquisition.total.contribution)}
+                  </span>
+                </div>
+                <div className="bg-black/30 rounded-lg p-1 text-center border border-white/15">
+                  <span className="text-[8px] uppercase font-bold text-amber-300 block">RE%</span>
+                  <span className="text-xs font-black text-amber-200 block mt-0.5 leading-tight">
+                    {formatPercentage(result.acquisition.total.re !== null && result.acquisition.total.re !== undefined ? result.acquisition.total.re * 0.60 : null)}
+                  </span>
+                </div>
               </div>
             </div>
 
             {/* Enterprise */}
-            <div className="bg-black/25 rounded-lg p-2 border border-white/15">
-              <div className="flex items-center gap-1 text-white/90 text-[10px] font-bold">
-                <Building2 className="w-3 h-3 text-white/80 shrink-0" />
-                <span>Enterprise (10%)</span>
+            <div className="bg-black/25 rounded-xl p-2.5 border border-white/15 flex flex-col justify-between h-full min-h-[90px]">
+              <div className="flex items-center justify-between pb-1 border-b border-white/15">
+                <div className="flex items-center gap-1.5 text-white/95 text-[11px] font-bold">
+                  <Building2 className="w-3.5 h-3.5 text-white/90 shrink-0" />
+                  <span>Enterprise</span>
+                </div>
+                <span className="text-[9px] bg-white/20 px-1.5 py-0.2 rounded font-bold text-white">10%</span>
               </div>
-              <div className="mt-0.5 text-xs font-black text-white">
-                VS: {formatPercentage(result.enterprise.totalContribution)}
-              </div>
-              <div className="text-[10px] font-bold text-amber-200">
-                RE: {formatPercentage(result.enterprise.totalRE)}
+              <div className="grid grid-cols-2 gap-1.5 mt-1.5">
+                <div className="bg-white/10 rounded-lg p-1 text-center border border-white/10">
+                  <span className="text-[8px] uppercase font-bold text-white/80 block">VS%</span>
+                  <span className="text-xs font-black text-white block mt-0.5 leading-tight">
+                    {formatPercentage(result.enterprise.totalContribution)}
+                  </span>
+                </div>
+                <div className="bg-black/30 rounded-lg p-1 text-center border border-white/15">
+                  <span className="text-[8px] uppercase font-bold text-amber-300 block">RE%</span>
+                  <span className="text-xs font-black text-amber-200 block mt-0.5 leading-tight">
+                    {formatPercentage(result.enterprise.totalRE)}
+                  </span>
+                </div>
               </div>
             </div>
 
             {/* Terminal */}
-            <div className="bg-black/25 rounded-lg p-2 border border-white/15">
-              <div className="flex items-center gap-1 text-white/90 text-[10px] font-bold">
-                <Smartphone className="w-3 h-3 text-white/80 shrink-0" />
-                <span>Terminal (10%)</span>
+            <div className="bg-black/25 rounded-xl p-2.5 border border-white/15 flex flex-col justify-between h-full min-h-[90px]">
+              <div className="flex items-center justify-between pb-1 border-b border-white/15">
+                <div className="flex items-center gap-1.5 text-white/95 text-[11px] font-bold">
+                  <Smartphone className="w-3.5 h-3.5 text-white/90 shrink-0" />
+                  <span>Terminal</span>
+                </div>
+                <span className="text-[9px] bg-white/20 px-1.5 py-0.2 rounded font-bold text-white">10%</span>
               </div>
-              <div className="mt-0.5 text-xs font-black text-white">
-                VS: {formatPercentage(result.terminal.contribution)}
-              </div>
-              <div className="text-[10px] font-bold text-amber-200">
-                RE: {formatPercentage(result.terminal.re !== null && result.terminal.re !== undefined ? result.terminal.re * 0.10 : null)}
+              <div className="grid grid-cols-2 gap-1.5 mt-1.5">
+                <div className="bg-white/10 rounded-lg p-1 text-center border border-white/10">
+                  <span className="text-[8px] uppercase font-bold text-white/80 block">VS%</span>
+                  <span className="text-xs font-black text-white block mt-0.5 leading-tight">
+                    {formatPercentage(result.terminal.contribution)}
+                  </span>
+                </div>
+                <div className="bg-black/30 rounded-lg p-1 text-center border border-white/15">
+                  <span className="text-[8px] uppercase font-bold text-amber-300 block">RE%</span>
+                  <span className="text-xs font-black text-amber-200 block mt-0.5 leading-tight">
+                    {formatPercentage(result.terminal.re !== null && result.terminal.re !== undefined ? result.terminal.re * 0.10 : null)}
+                  </span>
+                </div>
               </div>
             </div>
 
             {/* Fixed */}
-            <div className="bg-black/25 rounded-lg p-2 border border-white/15">
-              <div className="flex items-center gap-1 text-white/90 text-[10px] font-bold">
-                <Wifi className="w-3 h-3 text-white/80 shrink-0" />
-                <span>Fixed (20%)</span>
+            <div className="bg-black/25 rounded-xl p-2.5 border border-white/15 flex flex-col justify-between h-full min-h-[90px]">
+              <div className="flex items-center justify-between pb-1 border-b border-white/15">
+                <div className="flex items-center gap-1.5 text-white/95 text-[11px] font-bold">
+                  <Wifi className="w-3.5 h-3.5 text-white/90 shrink-0" />
+                  <span>Fixed</span>
+                </div>
+                <span className="text-[9px] bg-white/20 px-1.5 py-0.2 rounded font-bold text-white">20%</span>
               </div>
-              <div className="mt-0.5 text-xs font-black text-white">
-                VS: {formatPercentage(result.fixed.totalContribution)}
-              </div>
-              <div className="text-[10px] font-bold text-amber-200">
-                RE: {formatPercentage(result.fixed.totalRE)}
+              <div className="grid grid-cols-2 gap-1.5 mt-1.5">
+                <div className="bg-white/10 rounded-lg p-1 text-center border border-white/10">
+                  <span className="text-[8px] uppercase font-bold text-white/80 block">VS%</span>
+                  <span className="text-xs font-black text-white block mt-0.5 leading-tight">
+                    {formatPercentage(result.fixed.totalContribution)}
+                  </span>
+                </div>
+                <div className="bg-black/30 rounded-lg p-1 text-center border border-white/15">
+                  <span className="text-[8px] uppercase font-bold text-amber-300 block">RE%</span>
+                  <span className="text-xs font-black text-amber-200 block mt-0.5 leading-tight">
+                    {formatPercentage(result.fixed.totalRE)}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -526,52 +578,61 @@ export function PDFReportTemplate({
 
                 return (
                   <td key={col.id} className={`p-1.5 border-r last:border-r-0 border-slate-200 align-top ${col.isSummary ? 'bg-red-50/40' : ''}`}>
-                    <div className="flex flex-col gap-1.5">
+                    <div className="flex flex-col gap-1.5 h-full justify-between">
                       {/* VS% */}
-                      <div className="bg-white border border-slate-200 rounded-lg p-1 text-center shadow-2xs">
+                      <div className="bg-white border border-slate-200 rounded-lg p-1 text-center shadow-2xs min-h-[44px] flex flex-col justify-center">
                         <div className="flex items-center justify-between px-1 text-[8px] text-slate-500 font-bold">
                           <span>VS%</span>
                           <span>Actual</span>
                         </div>
-                        <span className="text-xs font-black text-slate-900 block">
+                        <span className="text-xs font-black text-slate-900 block leading-tight">
                           {formatPercentage(vs)}
                         </span>
                       </div>
 
                       {/* RE% */}
-                      <div className="bg-gradient-to-b from-indigo-50/90 to-indigo-50/40 border border-indigo-200 rounded-lg p-1 text-center shadow-2xs">
+                      <div className="bg-gradient-to-b from-indigo-50/90 to-indigo-50/40 border border-indigo-200 rounded-lg p-1 text-center shadow-2xs min-h-[44px] flex flex-col justify-center">
                         <div className="flex items-center justify-between px-1 text-[8px] text-indigo-600 font-bold">
                           <span>RE%</span>
                           <span>Expected</span>
                         </div>
-                        <span className="text-xs font-black text-indigo-900 block">
+                        <span className="text-xs font-black text-indigo-900 block leading-tight">
                           {formatPercentage(re)}
                         </span>
                       </div>
 
                       {/* Contribution % */}
-                      {!col.isSubBox && (
-                        <div className={`${col.theme.contribBg} border ${col.theme.contribBorder} rounded-lg p-1 text-center shadow-2xs`}>
-                          <span className={`text-[8px] uppercase font-black ${col.theme.contribText} block`}>
+                      {!col.isSubBox ? (
+                        <div className={`${col.theme.contribBg} border ${col.theme.contribBorder} rounded-lg p-1 text-center shadow-2xs min-h-[46px] flex flex-col justify-center`}>
+                          <span className={`text-[8px] uppercase font-black ${col.theme.contribText} block mb-0.5`}>
                             Contribution %
                           </span>
-                          <span className={`text-xs font-black ${col.theme.contribText} block`}>
+                          <span className={`text-xs font-black ${col.theme.contribText} block leading-tight`}>
                             {formatPercentage(res.contribution)}
                           </span>
                           {!col.isSummary && (
-                            <span className="text-[9px] text-slate-500 block font-semibold">
+                            <span className="text-[9px] text-slate-500 block font-semibold mt-0.5">
                               of {col.weightLabel}
                             </span>
                           )}
                         </div>
+                      ) : (
+                        <div className="bg-slate-50/70 border border-dashed border-slate-200 rounded-lg p-1 text-center min-h-[46px] flex flex-col justify-center">
+                          <span className="text-[8px] uppercase font-bold text-slate-400 block mb-0.5">
+                            Contribution %
+                          </span>
+                          <span className="text-[9px] font-semibold text-slate-400 block leading-tight">
+                            In Total Acq
+                          </span>
+                        </div>
                       )}
 
                       {/* Missing */}
-                      <div className="bg-white border border-slate-200 rounded-lg p-1 text-center shadow-2xs">
-                        <span className="text-[8px] uppercase font-bold text-slate-500 block">
+                      <div className="bg-white border border-slate-200 rounded-lg p-1 text-center shadow-2xs min-h-[44px] flex flex-col justify-center">
+                        <span className="text-[8px] uppercase font-bold text-slate-500 block mb-0.5">
                           Missing
                         </span>
-                        <span className={`text-[11px] font-bold block ${
+                        <span className={`text-[11px] font-bold block leading-tight ${
                           res.missing !== null
                             ? res.missing > 0
                               ? 'text-[#E60000]'
@@ -583,7 +644,7 @@ export function PDFReportTemplate({
                               ? 'Exceeded 100%'
                               : res.missing === 0
                               ? 'Goal Met'
-                              : `${res.missing.toLocaleString()} ${col.unit}`
+                              : `${res.missing.toLocaleString()} ${col.unit || 'Points'}`
                             : '-'}
                         </span>
                       </div>
@@ -630,14 +691,20 @@ export function PDFReportTemplate({
 
               {/* Terminal Total */}
               <td className="p-2 text-center border-r border-slate-200 bg-amber-100/70">
-                <div className="flex flex-col items-center justify-center">
-                  <div className="text-xs font-black text-amber-800">
-                    VS: {formatPercentage(result.terminal.contribution)}
+                <div className="flex flex-col items-center justify-center gap-0.5">
+                  <div className="flex items-center justify-center gap-1">
+                    <span className="text-amber-950 font-black text-xs">Terminal:</span>
+                    <span className="text-[9px] text-amber-800 font-bold">(10%)</span>
                   </div>
-                  <div className="text-[11px] font-black text-amber-950">
-                    RE: {formatPercentage(result.terminal.re !== null && result.terminal.re !== undefined ? result.terminal.re * 0.10 : null)}
+                  <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                    <span className="text-xs font-black text-amber-800">
+                      VS: {formatPercentage(result.terminal.contribution)}
+                    </span>
+                    <span className="text-slate-400">•</span>
+                    <span className="text-xs font-black text-amber-950">
+                      RE: {formatPercentage(result.terminal.re !== null && result.terminal.re !== undefined ? result.terminal.re * 0.10 : null)}
+                    </span>
                   </div>
-                  <span className="text-[9px] text-amber-800 font-bold">(10%)</span>
                 </div>
               </td>
 
