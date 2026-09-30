@@ -9,9 +9,9 @@ export const COMMISSION_WEIGHTS = {
 } as const;
 
 export const UNITS = {
-  ACQUISITION_LOW: 'Acq',
-  ACQUISITION_HIGH: 'Acq',
-  ACQUISITION_CASH: 'Acq',
+  ACQUISITION_LOW: 'GAs',
+  ACQUISITION_HIGH: 'GAs',
+  ACQUISITION_CASH: 'Cash',
   ACQUISITION_TOTAL: 'Acq',
   VOICE: 'Acq',
   ENTERPRISE_ACCOUNTS: 'Accounts',
