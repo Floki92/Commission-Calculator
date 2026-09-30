@@ -330,10 +330,10 @@ export function CommissionDashboard() {
       </header>
 
       {/* Main Content Area */}
-      <main className="max-w-[1920px] w-full mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 mt-3 sm:mt-6 pb-24 sm:pb-10 space-y-4 sm:space-y-6">
+      <main className="max-w-[1920px] w-full mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 mt-3 sm:mt-6 pb-12 sm:pb-6 space-y-3 sm:space-y-5">
         
         {/* Full Printable/Exportable Report Container */}
-        <div id="printable-report" className="w-full space-y-4 sm:space-y-6">
+        <div id="printable-report" className="w-full space-y-3 sm:space-y-5">
           
           {/* Executive Branded Header - Included in PDF, PNG export and Print */}
           <div className="hidden print:flex report-export-header items-center justify-between border-b-2 border-[#E60000] pb-4 mb-2">

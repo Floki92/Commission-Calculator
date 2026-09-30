@@ -358,19 +358,19 @@ export function MobileCommissionCards({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2.5 sm:space-y-3">
       {/* Category Segmented Scrollable Filter Bar */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 no-scrollbar text-xs font-semibold px-0.5">
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar text-xs font-semibold px-0.5">
         <button
           type="button"
           onClick={() => setActiveTab('all')}
-          className={`h-9 px-3.5 rounded-xl whitespace-nowrap transition-all shrink-0 flex items-center gap-1 font-bold ${
+          className={`h-8.5 sm:h-9 px-3.5 rounded-xl whitespace-nowrap transition-all shrink-0 flex items-center gap-1 font-bold ${
             activeTab === 'all'
               ? 'bg-slate-900 text-white shadow-xs'
               : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
           }`}
         >
-          <span>All Categories</span>
+          <span>All Boxs</span>
         </button>
 
         {CATEGORY_GROUPS.map((cat) => {
