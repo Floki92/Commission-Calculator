@@ -325,16 +325,6 @@ export function CommissionDashboard() {
               <span className="hidden sm:inline">Download PDF</span>
               <span className="sm:hidden">PDF</span>
             </button>
-
-            {/* Reset Button */}
-            <button
-              onClick={handleReset}
-              className="no-print flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-[#E60000] hover:bg-red-50 transition-colors px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg border border-slate-200 hover:border-red-200"
-              title="Reset all target and actual input fields"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-              <span>Reset</span>
-            </button>
           </div>
         </div>
       </header>
@@ -396,44 +386,27 @@ export function CommissionDashboard() {
           </div>
 
           {/* Month Run-Rate (RE%) Control Bar - Interactive Day, Name and Month Settings */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-3 sm:p-4 shadow-xs flex flex-wrap items-center justify-between gap-3 no-print">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-700 shrink-0">
-                <Calendar className="w-4 h-4" />
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
-                    Run-Rate Settings (VS% & RE%)
-                  </h2>
-                  <span className="bg-indigo-100 text-indigo-800 text-[10px] font-black px-2 py-0.5 rounded-full">
-                    {monthProgressPct.toFixed(1)}% Month Elapsed
-                  </span>
+          <div className="bg-white border border-slate-200 rounded-2xl p-3 sm:p-4 shadow-xs flex flex-col gap-3 no-print">
+            {/* Controls: Name, Today, Month Days, Auto (Now on top) */}
+            <div className="flex items-center gap-2.5 flex-wrap w-full">
+              {/* Store / Agent Name Box - Full Width on Mobile & High Visibility */}
+              <div className="w-full sm:w-auto flex-1 min-w-[220px] h-11 sm:h-10 flex items-center gap-2.5 bg-white hover:bg-slate-50/50 border-2 border-slate-300 hover:border-slate-400 focus-within:border-[#E60000] focus-within:ring-3 focus-within:ring-red-100 rounded-xl px-3 sm:px-3.5 transition-all shadow-xs">
+                <div className="w-6 h-6 rounded-md bg-red-50 text-[#E60000] flex items-center justify-center shrink-0">
+                  <User className="w-3.5 h-3.5" />
                 </div>
-                <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium truncate mt-0.5">
-                  <strong className="text-slate-700 font-bold">VS%</strong> = Actual / Target • <strong className="text-indigo-700 font-bold">RE%</strong> = VS% × ({monthConfig.totalDays} / {monthConfig.today})
-                </p>
-              </div>
-            </div>
-
-            {/* Controls: Name, Today, Month Days, Auto */}
-            <div className="flex items-center gap-2.5 flex-wrap">
-              {/* Store / Agent Name Box */}
-              <div className="h-10 flex items-center gap-2 bg-slate-50 hover:bg-white border border-slate-200 focus-within:border-[#E60000] focus-within:ring-2 focus-within:ring-red-100 rounded-xl px-3 transition-all shadow-2xs">
-                <User className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                <span className="text-[11px] font-bold text-slate-600 shrink-0">Name:</span>
+                <span className="text-xs font-bold text-slate-700 shrink-0">Name:</span>
                 <input
                   type="text"
                   placeholder="Store or Agent Name"
                   value={agentName}
                   onChange={(e) => handleAgentNameChange(e.target.value)}
-                  className="w-32 sm:w-44 font-bold text-xs text-slate-900 bg-transparent border-none outline-none focus:outline-none placeholder:text-slate-400 placeholder:font-normal"
+                  className="flex-1 min-w-0 font-bold text-xs sm:text-sm text-slate-900 bg-transparent border-none outline-none focus:outline-none placeholder:text-slate-400 placeholder:font-normal"
                   title="Store name or Agent name (included in PDF)"
                 />
               </div>
 
               {/* Day & Month Progress Controls (Unified Equal Box) */}
-              <div className="h-10 flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 shadow-2xs">
+              <div className="h-11 sm:h-10 flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 shadow-2xs">
                 <div className="flex items-center gap-1.5">
                   <span className="text-[11px] font-bold text-slate-600">Today:</span>
                   <input
@@ -475,12 +448,29 @@ export function CommissionDashboard() {
               <button
                 type="button"
                 onClick={() => setMonthConfig(getInitialMonthConfig())}
-                className="h-10 px-3 text-xs font-bold text-slate-700 hover:text-indigo-700 bg-slate-50 hover:bg-indigo-50/80 border border-slate-200 hover:border-indigo-300 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs shrink-0 cursor-pointer active:scale-95"
+                className="h-11 sm:h-10 px-3 text-xs font-bold text-slate-700 hover:text-indigo-700 bg-slate-50 hover:bg-indigo-50/80 border border-slate-200 hover:border-indigo-300 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs shrink-0 cursor-pointer active:scale-95"
                 title="Reset to current calendar date"
               >
                 <RotateCcw className="w-3.5 h-3.5 text-indigo-600" />
                 <span>Auto</span>
               </button>
+            </div>
+
+            {/* Run-Rate Settings Title & Formula (Moved under the Controls div) */}
+            <div className="flex items-center gap-2.5 min-w-0 pt-2 sm:pt-2.5 border-t border-slate-100">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-700 shrink-0">
+                <Calendar className="w-3.5 h-3.5" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
+                    Run-Rate Settings (VS% & RE%)
+                  </h2>
+                </div>
+                <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium truncate mt-0.5">
+                  <strong className="text-slate-700 font-bold">VS%</strong> = Actual / Target • <strong className="text-indigo-700 font-bold">RE%</strong> = VS% × ({monthConfig.totalDays} / {monthConfig.today})
+                </p>
+              </div>
             </div>
           </div>
 
@@ -661,7 +651,7 @@ export function CommissionDashboard() {
             </div>
           </section>
 
-          {/* View Mode Switcher */}
+          {/* View Mode Switcher & Reset Table Data Action */}
           <div className="flex items-center justify-between gap-2 pt-1 no-print">
             <div className="flex items-center gap-1 p-1 bg-slate-200/80 rounded-xl">
               <button
@@ -675,9 +665,6 @@ export function CommissionDashboard() {
               >
                 <LayoutGrid className="w-3.5 h-3.5" />
                 <span>Mobile Cards</span>
-                <span className="md:hidden bg-red-50 text-[#E60000] text-[9px] px-1.5 py-0.2 rounded font-extrabold">
-                  Fast
-                </span>
               </button>
               <button
                 type="button"
@@ -692,6 +679,18 @@ export function CommissionDashboard() {
                 <span>Full Table</span>
               </button>
             </div>
+
+            {/* Danger Highlight Reset Table Data Button */}
+            <button
+              type="button"
+              onClick={handleReset}
+              className="group flex items-center gap-1.5 text-xs font-bold text-red-700 hover:text-white bg-red-50 hover:bg-[#E60000] active:bg-[#CC0000] border border-red-200 hover:border-[#E60000] transition-all px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl shadow-2xs hover:shadow-xs active:scale-95 shrink-0 cursor-pointer"
+              title="Reset all target and actual input fields in the table"
+            >
+              <RefreshCw className="w-3.5 h-3.5 text-red-600 group-hover:text-white transition-colors shrink-0" />
+              <span className="hidden sm:inline">Reset Table Data</span>
+              <span className="sm:hidden">Reset Data</span>
+            </button>
           </div>
 
           {/* MAIN DATA INPUT SECTION */}

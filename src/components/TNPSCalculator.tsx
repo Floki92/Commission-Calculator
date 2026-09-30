@@ -101,13 +101,14 @@ export function TNPSCalculator() {
         </div>
         <div className="flex items-center gap-1.5">
           <button
+            type="button"
             onClick={handleReset}
-            className="text-[10px] sm:text-[11px] font-medium text-slate-500 hover:text-[#E60000] transition-colors p-1 rounded-md hover:bg-red-50 flex items-center gap-1"
-            title="Clear TNPS inputs"
-            aria-label="Clear TNPS inputs"
+            className="group flex items-center gap-1.5 text-xs font-bold text-red-700 hover:text-white bg-red-50 hover:bg-[#E60000] active:bg-[#CC0000] border border-red-200 hover:border-[#E60000] transition-all px-2.5 sm:px-3 py-1.5 rounded-xl shadow-2xs hover:shadow-xs active:scale-95 shrink-0 cursor-pointer"
+            title="Clear all TNPS inputs"
+            aria-label="Clear all TNPS inputs"
           >
-            <RotateCcw className="w-3 h-3" />
-            <span>Clear</span>
+            <RotateCcw className="w-3.5 h-3.5 text-red-600 group-hover:text-white transition-colors shrink-0" />
+            <span>Clear TNPS</span>
           </button>
         </div>
       </div>

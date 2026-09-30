@@ -47,7 +47,13 @@ export const PWAInstallButton: React.FC = () => {
     }
   };
 
-  const isInIframe = typeof window !== 'undefined' && window.self !== window.top;
+  const isInIframe = (() => {
+    try {
+      return typeof window !== 'undefined' && window.self !== window.top;
+    } catch {
+      return true;
+    }
+  })();
 
   return (
     <>

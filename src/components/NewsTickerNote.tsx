@@ -3,9 +3,10 @@ import { Pencil, Check } from 'lucide-react';
 
 interface NewsTickerNoteProps {
   note: string;
-  onNoteChange: (val: string) => void;
+  onNoteChange?: (val: string) => void;
   className?: string;
   placeholder?: string;
+  editable?: boolean;
 }
 
 export const NewsTickerNote = React.memo(function NewsTickerNote({
@@ -13,6 +14,7 @@ export const NewsTickerNote = React.memo(function NewsTickerNote({
   onNoteChange,
   className = '',
   placeholder = "Must Get 90% of High GA's to not lose any Over in Low GA's",
+  editable = false,
 }: NewsTickerNoteProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(note);
@@ -56,7 +58,9 @@ export const NewsTickerNote = React.memo(function NewsTickerNote({
   }, [displayText, isEditing]);
 
   const handleSave = () => {
-    onNoteChange(draft.trim() ? draft : placeholder);
+    if (onNoteChange) {
+      onNoteChange(draft.trim() ? draft : placeholder);
+    }
     setIsEditing(false);
   };
 
@@ -79,7 +83,7 @@ export const NewsTickerNote = React.memo(function NewsTickerNote({
         <span className="font-extrabold">NOTE</span>
       </div>
 
-      {isEditing ? (
+      {editable && isEditing ? (
         <div className="flex items-center gap-1.5 flex-1 min-w-0">
           <input
             ref={inputRef}
@@ -104,9 +108,11 @@ export const NewsTickerNote = React.memo(function NewsTickerNote({
         /* Live News Ping-Pong Ticker: Moves from Right to Left and back (vice-versa) to display entire note */
         <div
           ref={containerRef}
-          onClick={() => setIsEditing(true)}
-          className="relative flex-1 overflow-hidden h-5.5 flex items-center cursor-pointer select-none group min-w-0"
-          title="Click to edit rule note"
+          onClick={editable ? () => setIsEditing(true) : undefined}
+          className={`relative flex-1 overflow-hidden h-5.5 flex items-center select-none group min-w-0 ${
+            editable ? 'cursor-pointer' : 'cursor-default'
+          }`}
+          title={editable ? 'Click to edit rule note' : undefined}
         >
           {/* Animated Ping-Pong Text (Right to Left and Back) */}
           <div
@@ -132,19 +138,21 @@ export const NewsTickerNote = React.memo(function NewsTickerNote({
             {displayText}
           </span>
 
-          {/* Quick Edit indicator on hover */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsEditing(true);
-            }}
-            className="opacity-0 group-hover:opacity-100 transition-opacity ml-auto pl-1 text-red-600 hover:text-red-800 shrink-0 print:hidden export-hide-input"
-            title="Edit note"
-            aria-label="Edit note"
-          >
-            <Pencil className="w-2.5 h-2.5" />
-          </button>
+          {/* Quick Edit indicator on hover - only when editable */}
+          {editable && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditing(true);
+              }}
+              className="opacity-0 group-hover:opacity-100 transition-opacity ml-auto pl-1 text-red-600 hover:text-red-800 shrink-0 print:hidden export-hide-input"
+              title="Edit note"
+              aria-label="Edit note"
+            >
+              <Pencil className="w-2.5 h-2.5" />
+            </button>
+          )}
         </div>
       )}
     </div>

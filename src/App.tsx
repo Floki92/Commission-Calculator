@@ -4,7 +4,12 @@
  */
 
 import { CommissionDashboard } from './components/CommissionDashboard';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 export default function App() {
-  return <CommissionDashboard />;
+  return (
+    <ErrorBoundary>
+      <CommissionDashboard />
+    </ErrorBoundary>
+  );
 }

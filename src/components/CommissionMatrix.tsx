@@ -141,7 +141,7 @@ export const MATRIX_COLUMNS: ColumnConfig[] = [
     categoryWeight: '60%',
     subTitle: 'Total Acq',
     weight: COMMISSION_WEIGHTS.ACQUISITION,
-    weightLabel: 'Sum 60%',
+    weightLabel: '',
     unit: UNITS.ACQUISITION_TOTAL,
     isSummary: true,
     theme: {
@@ -323,14 +323,25 @@ const MatrixInputCell = React.memo(function MatrixInputCell({
   if (col.isSummary) {
     return (
       <td className="p-2 sm:p-2.5 border-r border-slate-200 align-top bg-red-50/40">
-        <div className="flex flex-col items-center justify-center p-1.5 sm:p-2 bg-gradient-to-b from-red-100/90 to-red-50/80 border border-red-300 rounded-lg text-center shadow-2xs min-h-[58px] sm:min-h-[64px]">
-          <div className="text-sm sm:text-base font-black text-red-950">
-            {summaryValue !== null && summaryValue !== undefined ? (
-              summaryValue.toLocaleString()
-            ) : (
-              <span className="text-slate-400 font-normal">0</span>
-            )}
+        <div className="relative">
+          <div className="flex items-center justify-center px-2 sm:px-3 py-1.5 sm:py-2 bg-gradient-to-b from-red-100/90 to-red-50/80 border border-red-300 rounded-lg text-center shadow-2xs min-h-[34px] sm:min-h-[38px]">
+            <div className="text-xs sm:text-sm font-black text-red-950">
+              {summaryValue !== null && summaryValue !== undefined ? (
+                summaryValue.toLocaleString()
+              ) : (
+                <span className="text-slate-400 font-normal">0</span>
+              )}
+            </div>
           </div>
+          {col.unit ? (
+            <span className="block text-[10px] text-red-700/80 text-center mt-0.5 sm:mt-1 font-semibold">
+              {col.unit}
+            </span>
+          ) : (
+            <span className="block text-[10px] text-transparent text-center mt-0.5 sm:mt-1 select-none">
+              &nbsp;
+            </span>
+          )}
         </div>
       </td>
     );

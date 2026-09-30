@@ -67,7 +67,7 @@ function aistudioMediaPlugin(): Plugin {
 
 export default defineConfig(() => {
   return {
-    base: './',
+    base: '/',
     plugins: [
       react(),
       tailwindcss(),
@@ -82,7 +82,7 @@ export default defineConfig(() => {
           'pwa-maskable-512x512.png',
         ],
         manifest: {
-          id: './',
+          id: '/',
           name: 'Commission Calculator',
           short_name: 'Commission',
           description:
@@ -91,27 +91,27 @@ export default defineConfig(() => {
           background_color: '#ffffff',
           display: 'standalone',
           orientation: 'portrait',
-          scope: './',
-          start_url: './',
+          scope: '/',
+          start_url: '/',
           icons: [
             {
-              src: 'pwa-192x192.png',
+              src: '/pwa-192x192.png',
               sizes: '192x192',
               type: 'image/png',
             },
             {
-              src: 'pwa-512x512.png',
+              src: '/pwa-512x512.png',
               sizes: '512x512',
               type: 'image/png',
             },
             {
-              src: 'pwa-maskable-512x512.png',
+              src: '/pwa-maskable-512x512.png',
               sizes: '512x512',
               type: 'image/png',
               purpose: 'maskable',
             },
             {
-              src: 'vodafone-icon.svg',
+              src: '/vodafone-icon.svg',
               sizes: 'any',
               type: 'image/svg+xml',
               purpose: 'any',
@@ -153,8 +153,7 @@ export default defineConfig(() => {
           ],
         },
         devOptions: {
-          enabled: true,
-          type: 'module',
+          enabled: false,
         },
       }),
     ],

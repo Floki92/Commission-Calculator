@@ -9,7 +9,7 @@ export const OfflineIndicator: React.FC = () => {
   const [isRetrying, setIsRetrying] = useState(false);
 
   useEffect(() => {
-    let reconnectTimer: NodeJS.Timeout;
+    let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
 
     const handleOnline = () => {
       setIsOnline(true);
