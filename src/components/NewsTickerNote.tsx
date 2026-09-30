@@ -13,7 +13,7 @@ export const NewsTickerNote = React.memo(function NewsTickerNote({
   note,
   onNoteChange,
   className = '',
-  placeholder = "Must Get 90% of High GA's to not lose any Over in Low GA's",
+  placeholder = "Must Get 90% of High Acq to not lose any Over in Low Acq",
   editable = false,
 }: NewsTickerNoteProps) {
   const [isEditing, setIsEditing] = useState(false);

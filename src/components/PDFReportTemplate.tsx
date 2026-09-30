@@ -418,7 +418,7 @@ export function PDFReportTemplate({
                 {/* Static full rule note without truncation */}
                 <div className="bg-red-50/80 border border-red-200 rounded-md px-2 py-0.5 text-[11px] font-bold text-red-950 text-center">
                   <span className="bg-[#E60000] text-white text-[9px] font-black px-1.5 py-0.2 rounded mr-1.5">NOTE</span>
-                  {acqNote || "Must Get 90% of High GA's to not lose any Over in Low GA's"}
+                  {acqNote || "Must Get 90% of High Acq to not lose any Over in Low Acq"}
                 </div>
               </th>
 

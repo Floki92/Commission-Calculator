@@ -9,14 +9,14 @@ export const COMMISSION_WEIGHTS = {
 } as const;
 
 export const UNITS = {
-  ACQUISITION_LOW: "GA's",
-  ACQUISITION_HIGH: "GA's",
-  ACQUISITION_CASH: '',
-  ACQUISITION_TOTAL: '',
-  VOICE: "GA's",
+  ACQUISITION_LOW: 'Acq',
+  ACQUISITION_HIGH: 'Acq',
+  ACQUISITION_CASH: 'Acq',
+  ACQUISITION_TOTAL: 'Acq',
+  VOICE: 'Acq',
   ENTERPRISE_ACCOUNTS: 'Accounts',
   ENTERPRISE_LINES: 'Lines',
   TERMINAL: 'EGP',
-  DSL: 'Customers',
+  DSL: 'SR',
   CONNECTIVITY: 'Points',
 } as const;

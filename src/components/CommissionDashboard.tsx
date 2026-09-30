@@ -56,7 +56,7 @@ const LEGACY_COMMISSION_STORAGE_KEY = 'vodafone_commission_input_v1';
 const ACQ_NOTE_STORAGE_KEY = 'vodafone_acq_note_v2';
 const MONTH_CONFIG_STORAGE_KEY = 'vodafone_commission_month_config_v1';
 const AGENT_NAME_STORAGE_KEY = 'vodafone_agent_name_v1';
-const DEFAULT_ACQ_NOTE = "Must Get 90% of High GA's to not lose any Over in Low GA's";
+const DEFAULT_ACQ_NOTE = "Must Get 90% of High Acq to not lose any Over in Low Acq";
 
 const parseComp = (comp?: any, fbT: number | null = null, fbA: number | null = null): ComponentInput => ({
   target: typeof comp?.target === 'number' ? comp.target : fbT,
@@ -330,7 +330,7 @@ export function CommissionDashboard() {
       </header>
 
       {/* Main Content Area */}
-      <main className="max-w-[1920px] w-full mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 mt-3 sm:mt-6 space-y-4 sm:space-y-6">
+      <main className="max-w-[1920px] w-full mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 mt-3 sm:mt-6 pb-24 sm:pb-10 space-y-4 sm:space-y-6">
         
         {/* Full Printable/Exportable Report Container */}
         <div id="printable-report" className="w-full space-y-4 sm:space-y-6">
@@ -405,55 +405,57 @@ export function CommissionDashboard() {
                 />
               </div>
 
-              {/* Day & Month Progress Controls (Unified Equal Box) */}
-              <div className="h-11 sm:h-10 flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 shadow-2xs">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[11px] font-bold text-slate-600">Today:</span>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    min="1"
-                    max={monthConfig.totalDays}
-                    value={monthConfig.today}
-                    onChange={(e) => {
-                      const val = Number(e.target.value);
-                      if (val > 0) setMonthConfig(prev => ({ ...prev, today: Math.min(val, prev.totalDays) }));
-                    }}
-                    className="w-11 text-center font-black text-xs text-indigo-950 bg-white border border-slate-300 rounded-lg py-1 px-1 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                    title="Current elapsed day of month (Today)"
-                  />
+              {/* Day & Month Progress Controls + Auto button in unified mobile row */}
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="flex-1 sm:flex-initial h-11 sm:h-10 flex items-center justify-between sm:justify-start gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 shadow-2xs">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] font-bold text-slate-600">Today:</span>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min="1"
+                      max={monthConfig.totalDays}
+                      value={monthConfig.today}
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        if (val > 0) setMonthConfig(prev => ({ ...prev, today: Math.min(val, prev.totalDays) }));
+                      }}
+                      className="w-11 text-center font-black text-xs text-indigo-950 bg-white border border-slate-300 rounded-lg py-1 px-1 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      title="Current elapsed day of month (Today)"
+                    />
+                  </div>
+
+                  <span className="text-slate-400 font-bold text-xs">/</span>
+
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] font-bold text-slate-600">Month:</span>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min="28"
+                      max="31"
+                      value={monthConfig.totalDays}
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        if (val >= 28 && val <= 31) setMonthConfig(prev => ({ ...prev, totalDays: val }));
+                      }}
+                      className="w-11 text-center font-black text-xs text-slate-900 bg-white border border-slate-300 rounded-lg py-1 px-1 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      title="Total days in this month"
+                    />
+                  </div>
                 </div>
 
-                <span className="text-slate-400 font-bold text-xs">/</span>
-
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[11px] font-bold text-slate-600">Month:</span>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    min="28"
-                    max="31"
-                    value={monthConfig.totalDays}
-                    onChange={(e) => {
-                      const val = Number(e.target.value);
-                      if (val >= 28 && val <= 31) setMonthConfig(prev => ({ ...prev, totalDays: val }));
-                    }}
-                    className="w-11 text-center font-black text-xs text-slate-900 bg-white border border-slate-300 rounded-lg py-1 px-1 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                    title="Total days in this month"
-                  />
-                </div>
+                {/* Reset to Actual Calendar Day Button */}
+                <button
+                  type="button"
+                  onClick={() => setMonthConfig(getInitialMonthConfig())}
+                  className="h-11 sm:h-10 px-3.5 text-xs font-bold text-slate-700 hover:text-indigo-700 bg-slate-50 hover:bg-indigo-50/80 border border-slate-200 hover:border-indigo-300 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs shrink-0 cursor-pointer active:scale-95"
+                  title="Reset to current calendar date"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Auto</span>
+                </button>
               </div>
-
-              {/* Reset to Actual Calendar Day Button */}
-              <button
-                type="button"
-                onClick={() => setMonthConfig(getInitialMonthConfig())}
-                className="h-11 sm:h-10 px-3 text-xs font-bold text-slate-700 hover:text-indigo-700 bg-slate-50 hover:bg-indigo-50/80 border border-slate-200 hover:border-indigo-300 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs shrink-0 cursor-pointer active:scale-95"
-                title="Reset to current calendar date"
-              >
-                <RotateCcw className="w-3.5 h-3.5 text-indigo-600" />
-                <span>Auto</span>
-              </button>
             </div>
 
             {/* Run-Rate Settings Title & Formula (Moved under the Controls div) */}
@@ -728,39 +730,36 @@ export function CommissionDashboard() {
       </main>
 
       {/* Mobile Floating Bottom Bar - Sticky status with VS% and RE% */}
-      <aside aria-label="Mobile summary" className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 px-3 py-2 shadow-lg flex items-center justify-between gap-2 no-print">
+      <aside aria-label="Mobile summary" className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-lg border-t border-slate-200/90 px-3.5 pt-2.5 pb-[max(0.65rem,env(safe-area-inset-bottom))] shadow-xl flex items-center justify-between gap-2 no-print">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="w-2.5 h-2.5 rounded-full bg-[#E60000] shrink-0" />
-          <div className="flex items-center gap-2 min-w-0">
-            <div>
-              <div className="text-[9px] text-slate-500 font-bold leading-none uppercase">
-                VS%
-              </div>
-              <div className="text-sm font-black text-slate-900 leading-tight">
+          <div className="flex items-center gap-1.5 min-w-0">
+            {/* VS% Pill */}
+            <div className="flex items-center gap-1.5 bg-red-50/90 border border-red-200 px-2.5 py-1 rounded-xl shrink-0">
+              <span className="text-[10px] font-black text-[#E60000] uppercase tracking-wider">VS%</span>
+              <span className="text-xs font-black text-slate-900">
                 {formatPercentage(result.overall.achievement)}
-              </div>
+              </span>
             </div>
-            <span className="text-slate-300 font-bold">•</span>
-            <div>
-              <div className="text-[9px] text-indigo-600 font-bold leading-none uppercase">
-                RE%
-              </div>
-              <div className="text-sm font-black text-indigo-700 leading-tight">
+
+            {/* RE% Pill */}
+            <div className="flex items-center gap-1.5 bg-indigo-50/90 border border-indigo-200 px-2.5 py-1 rounded-xl shrink-0">
+              <span className="text-[10px] font-black text-indigo-700 uppercase tracking-wider">RE%</span>
+              <span className="text-xs font-black text-indigo-950">
                 {formatPercentage(result.overall.re)}
-              </div>
+              </span>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
-          <span className="text-[9px] font-bold text-slate-500 bg-slate-100 px-1.5 py-1 rounded">
+          <span className="text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200/70 px-2.5 py-1 rounded-xl">
             Day {monthConfig.today}/{monthConfig.totalDays}
           </span>
 
           <button
             type="button"
             onClick={scrollToTop}
-            className="p-1.5 text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+            className="w-8 h-8 flex items-center justify-center text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors active:scale-95 shadow-2xs"
             title="Scroll to Top"
             aria-label="Scroll to Top"
           >
