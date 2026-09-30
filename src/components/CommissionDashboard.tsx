@@ -7,6 +7,8 @@ import { MobileCommissionCards } from './MobileCommissionCards';
 import { VodafoneLogo } from './VodafoneLogo';
 import { TNPSCalculator } from './TNPSCalculator';
 import { PDFReportTemplate } from './PDFReportTemplate';
+import { PWAInstallButton } from './PWAInstallButton';
+import { OfflineIndicator } from './OfflineIndicator';
 import { 
   RefreshCw, 
   CheckCircle2, 
@@ -305,6 +307,9 @@ export function CommissionDashboard() {
           </div>
           
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+            {/* PWA Install Button */}
+            <PWAInstallButton />
+
             {/* Direct PDF Download Button */}
             <button
               onClick={handleDownloadPDFReport}
@@ -788,6 +793,9 @@ export function CommissionDashboard() {
           />
         </div>
       </div>
+
+      {/* Connectivity Status Indicator */}
+      <OfflineIndicator />
     </div>
   );
 }
