@@ -9,6 +9,7 @@ import { TNPSCalculator } from './TNPSCalculator';
 import { PDFReportTemplate } from './PDFReportTemplate';
 import { PWAInstallButton } from './PWAInstallButton';
 import { OfflineIndicator } from './OfflineIndicator';
+import { ThemeToggle } from './ThemeToggle';
 import { 
   RefreshCw, 
   CheckCircle2, 
@@ -20,8 +21,6 @@ import {
   Building2, 
   Smartphone, 
   Wifi, 
-  Table as TableIcon, 
-  LayoutGrid, 
   ArrowUp,
   Calendar,
   RotateCcw,
@@ -122,14 +121,6 @@ export function CommissionDashboard() {
       }
     } catch {}
     return defaults;
-  });
-
-  // Responsive default: cards on mobile, table on desktop
-  const [viewMode, setViewMode] = useState<'cards' | 'table'>(() => {
-    if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
-      return 'table';
-    }
-    return 'cards';
   });
 
   // Note state for Acquisition rule
@@ -282,7 +273,7 @@ export function CommissionDashboard() {
   const monthProgressPct = Math.min(100, Math.max(0, (monthConfig.today / monthConfig.totalDays) * 100));
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 pb-16 font-sans">
+    <div className="min-h-screen bg-white text-slate-900 pb-16 font-sans">
       {/* Top Navigation with Vodafone Brandmark */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-xs">
         <div className="max-w-[1920px] w-full mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 h-14 sm:h-16 flex items-center justify-between gap-2">
@@ -381,7 +372,7 @@ export function CommissionDashboard() {
             </div>
             <div className="flex items-center gap-3 font-black">
               <span className="text-slate-900">VS% Actual: {formatPercentage(result.overall.achievement)}</span>
-              <span className="text-indigo-700">RE% Projected: {formatPercentage(result.overall.re)}</span>
+              <span className="text-slate-700">RE% Projected: {formatPercentage(result.overall.re)}</span>
             </div>
           </div>
 
@@ -420,7 +411,7 @@ export function CommissionDashboard() {
                         const val = Number(e.target.value);
                         if (val > 0) setMonthConfig(prev => ({ ...prev, today: Math.min(val, prev.totalDays) }));
                       }}
-                      className="w-11 text-center font-black text-xs text-indigo-950 bg-white border border-slate-300 rounded-lg py-1 px-1 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      className="w-11 text-center font-black text-xs text-slate-900 bg-white border border-slate-300 rounded-lg py-1 px-1 focus:ring-1 focus:ring-slate-400 focus:outline-none"
                       title="Current elapsed day of month (Today)"
                     />
                   </div>
@@ -439,7 +430,7 @@ export function CommissionDashboard() {
                         const val = Number(e.target.value);
                         if (val >= 28 && val <= 31) setMonthConfig(prev => ({ ...prev, totalDays: val }));
                       }}
-                      className="w-11 text-center font-black text-xs text-slate-900 bg-white border border-slate-300 rounded-lg py-1 px-1 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      className="w-11 text-center font-black text-xs text-slate-900 bg-white border border-slate-300 rounded-lg py-1 px-1 focus:ring-1 focus:ring-slate-400 focus:outline-none"
                       title="Total days in this month"
                     />
                   </div>
@@ -449,10 +440,10 @@ export function CommissionDashboard() {
                 <button
                   type="button"
                   onClick={() => setMonthConfig(getInitialMonthConfig())}
-                  className="h-11 sm:h-10 px-3.5 text-xs font-bold text-slate-700 hover:text-indigo-700 bg-slate-50 hover:bg-indigo-50/80 border border-slate-200 hover:border-indigo-300 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs shrink-0 cursor-pointer active:scale-95"
+                  className="h-11 sm:h-10 px-3.5 text-xs font-bold text-slate-700 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 hover:border-slate-300 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs shrink-0 cursor-pointer active:scale-95"
                   title="Reset to current calendar date"
                 >
-                  <RotateCcw className="w-3.5 h-3.5 text-indigo-600" />
+                  <RotateCcw className="w-3.5 h-3.5 text-slate-600" />
                   <span>Auto</span>
                 </button>
               </div>
@@ -460,7 +451,7 @@ export function CommissionDashboard() {
 
             {/* Run-Rate Settings Title & Formula (Moved under the Controls div) */}
             <div className="flex items-center gap-2.5 min-w-0 pt-2 sm:pt-2.5 border-t border-slate-100">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-700 shrink-0">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 shrink-0">
                 <Calendar className="w-3.5 h-3.5" />
               </div>
               <div className="min-w-0">
@@ -470,7 +461,7 @@ export function CommissionDashboard() {
                   </h2>
                 </div>
                 <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium truncate mt-0.5">
-                  <strong className="text-slate-700 font-bold">VS%</strong> = Actual / Target • <strong className="text-indigo-700 font-bold">RE%</strong> = VS% × ({monthConfig.totalDays} / {monthConfig.today})
+                  <strong className="text-slate-700 font-bold">VS%</strong> = Actual / Target • <strong className="text-slate-700 font-bold">RE%</strong> = VS% × ({monthConfig.totalDays} / {monthConfig.today})
                 </p>
               </div>
             </div>
@@ -653,35 +644,8 @@ export function CommissionDashboard() {
             </div>
           </section>
 
-          {/* View Mode Switcher & Reset Table Data Action */}
-          <div className="flex items-center justify-between gap-2 pt-1 no-print">
-            <div className="flex items-center gap-1 p-1 bg-slate-200/80 rounded-xl">
-              <button
-                type="button"
-                onClick={() => setViewMode('cards')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  viewMode === 'cards'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                <span>Mobile Cards</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('table')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  viewMode === 'table'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <TableIcon className="w-3.5 h-3.5" />
-                <span>Full Table</span>
-              </button>
-            </div>
-
+          {/* Action Bar (Reset Table Data Action) */}
+          <div className="flex items-center justify-end gap-2 pt-1 no-print">
             {/* Danger Highlight Reset Table Data Button */}
             <button
               type="button"
@@ -695,10 +659,10 @@ export function CommissionDashboard() {
             </button>
           </div>
 
-          {/* MAIN DATA INPUT SECTION */}
+          {/* MAIN DATA INPUT SECTION - FORCED: Table View on Large Screen, Cards View on Mobile Screen */}
           <section aria-labelledby="matrix-section">
-            {/* 1. Mobile Cards View */}
-            <div className={viewMode === 'cards' ? 'block print:hidden report-hide-on-export' : 'hidden print:hidden report-hide-on-export'}>
+            {/* 1. Mobile Cards View - FORCED: ON in Mobile Screen, OFF in Large Screen */}
+            <div className="block lg:hidden print:hidden report-hide-on-export">
               <MobileCommissionCards
                 input={input}
                 result={result}
@@ -708,8 +672,8 @@ export function CommissionDashboard() {
               />
             </div>
 
-            {/* 2. Full Table View */}
-            <div className={viewMode === 'table' ? 'block' : 'hidden print:block report-show-on-export'}>
+            {/* 2. Full Table View - FORCED: ON in Large Screen, OFF in Mobile Screen */}
+            <div className="hidden lg:block print:block report-show-on-export bg-white rounded-2xl">
               <CommissionMatrix 
                 input={input}
                 result={result}
@@ -742,9 +706,9 @@ export function CommissionDashboard() {
             </div>
 
             {/* RE% Pill */}
-            <div className="flex items-center gap-1.5 bg-indigo-50/90 border border-indigo-200 px-2.5 py-1 rounded-xl shrink-0">
-              <span className="text-[10px] font-black text-indigo-700 uppercase tracking-wider">RE%</span>
-              <span className="text-xs font-black text-indigo-950">
+            <div className="flex items-center gap-1.5 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-xl shrink-0">
+              <span className="text-[10px] font-black text-slate-600 uppercase tracking-wider">RE%</span>
+              <span className="text-xs font-black text-slate-900">
                 {formatPercentage(result.overall.re)}
               </span>
             </div>

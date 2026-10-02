@@ -26,6 +26,7 @@ interface SingleCardProps {
   isSummary?: boolean;
   showDailyRequired?: boolean;
   isCurrency?: boolean;
+  isAcquisition?: boolean;
   onTargetChange?: (val: string) => void;
   onActualChange?: (val: string) => void;
 }
@@ -43,6 +44,7 @@ const MobileCard = React.memo(function MobileCard({
   isSummary = false,
   showDailyRequired = false,
   isCurrency = false,
+  isAcquisition = false,
   onTargetChange,
   onActualChange,
 }: SingleCardProps) {
@@ -59,20 +61,20 @@ const MobileCard = React.memo(function MobileCard({
     <div
       className={`rounded-2xl border transition-all overflow-hidden ${
         isSummary
-          ? 'bg-gradient-to-br from-red-50/90 via-white to-red-50/50 border-red-300 shadow-sm'
+          ? 'bg-slate-50/70 border-slate-300 shadow-2xs'
           : 'bg-white border-slate-200/90 shadow-2xs hover:border-slate-300'
-      } p-3.5 sm:p-4`}
+      } p-3 sm:p-3.5`}
     >
       {/* 1. Header: Component Title, Weight Badge & Unit */}
-      <div className="flex items-center justify-between gap-2 mb-3">
+      <div className="flex items-center justify-between gap-2 mb-2">
         <div className="flex items-center gap-2 min-w-0">
           <span className={`w-2.5 h-2.5 rounded-full ${accentColor} shrink-0 ring-4 ring-slate-100`} />
           <div className="min-w-0">
-            <h4 className="font-black text-slate-900 text-sm sm:text-base leading-tight truncate">
+            <h4 className="font-black text-slate-900 text-xs sm:text-sm leading-tight truncate">
               {title}
             </h4>
             {isSummary && (
-              <span className="text-[10px] text-[#E60000] font-bold block mt-0.5">
+              <span className="text-[9px] text-slate-500 font-medium block mt-0.5">
                 Auto-calculated total sum
               </span>
             )}
@@ -81,179 +83,189 @@ const MobileCard = React.memo(function MobileCard({
 
         <div className="flex items-center gap-1.5 shrink-0">
           {weightLabel && (
-            <span className="font-extrabold text-[10px] text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
+            <span className="font-extrabold text-[9px] text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded">
               {weightLabel}
             </span>
           )}
-          <span className="text-[11px] font-semibold text-slate-500 bg-slate-50 border border-slate-200/60 px-2 py-0.5 rounded-md">
+          <span className="text-[10px] font-semibold text-slate-500 bg-slate-50 border border-slate-200/60 px-1.5 py-0.5 rounded">
             {unit}
           </span>
         </div>
       </div>
 
-      {/* 2. Interactive Input Grid: Target & Actual */}
-      <div className="grid grid-cols-2 gap-2.5 mb-2.5">
-        {/* Target Input */}
-        <div className="flex flex-col bg-slate-50/90 hover:bg-slate-50 border border-slate-200/90 focus-within:border-[#E60000] focus-within:bg-white focus-within:ring-2 focus-within:ring-red-100 rounded-xl p-2 transition-all shadow-2xs">
-          <div className="flex items-center justify-between px-1 mb-1">
-            <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1">
-              <Target className="w-3 h-3 text-slate-400" />
-              <span>Target</span>
-            </span>
-            <span className="text-[9px] font-medium text-slate-400">Assigned</span>
+      {/* 2. Interactive Input Grid: Target & Actual (Inputs of Acquisition adjusted to 50% size) */}
+      <div className="grid grid-cols-2 gap-2 mb-2">
+        {/* Target Input with Daily under target div input with a line */}
+        <div className="flex flex-col justify-between bg-white border border-slate-200 rounded-lg p-2 transition-all">
+          <div>
+            <div className="flex items-center justify-between px-0.5 mb-1">
+              <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                <Target className="w-2.5 h-2.5 text-slate-400" />
+                <span>Target</span>
+              </span>
+              <span className="text-[8px] font-medium text-slate-400">Assigned</span>
+            </div>
+
+            {isSummary ? (
+              <div className={`h-7 flex items-center justify-center font-bold text-xs text-slate-900 bg-white border border-slate-300 rounded ${
+                isAcquisition ? 'w-1/2 min-w-[65px] max-w-[90px] mx-auto' : 'w-full'
+              }`}>
+                {target !== null ? target.toLocaleString() : '0'}
+              </div>
+            ) : (
+              <div className="flex justify-center w-full">
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="any"
+                  placeholder="0"
+                  value={target ?? ''}
+                  onChange={(e) => onTargetChange?.(e.target.value)}
+                  className={`h-7 text-center font-bold text-xs rounded border outline-none transition-all ${
+                    isAcquisition ? 'w-1/2 min-w-[65px] max-w-[90px] mx-auto' : 'w-full'
+                  } ${
+                    isZero
+                      ? 'border-red-500 bg-red-50 text-red-900'
+                      : 'border-slate-300 bg-white text-slate-900 focus:border-[#E60000]'
+                  }`}
+                />
+              </div>
+            )}
           </div>
 
-          {isSummary ? (
-            <div className="h-11 flex items-center justify-center font-black text-base text-red-950 bg-red-100/70 border border-red-200 rounded-lg">
-              {target !== null ? target.toLocaleString() : '0'}
+          {/* Under target div input make a Line and Put daily */}
+          {showDailyRequired && (
+            <div className="w-full pt-1.5 mt-1.5 border-t border-slate-200 text-center">
+              <div className="flex items-center justify-center gap-1 text-[9px] text-slate-700 font-bold">
+                <CalendarDays className="w-2.5 h-2.5 text-slate-500 shrink-0" />
+                <span>Daily:</span>
+                <span className="font-extrabold text-slate-900">
+                  {dailyRequired !== null
+                    ? isCurrency
+                      ? `${Math.round(dailyRequired).toLocaleString()} EGP`
+                      : `${dailyRequired.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} ${unit || "GA's"}`
+                    : `0 ${unit || "GA's"}`}
+                </span>
+                <span className="text-[7.5px] text-slate-400 font-semibold">/d</span>
+              </div>
+              <span className="text-[7px] text-slate-400 block font-medium mt-0.5">
+                Target / 22 Day
+              </span>
             </div>
-          ) : (
-            <input
-              type="number"
-              inputMode="decimal"
-              min="0"
-              step="any"
-              placeholder="0"
-              value={target ?? ''}
-              onChange={(e) => onTargetChange?.(e.target.value)}
-              className={`w-full h-11 text-center font-black text-base rounded-lg border outline-none transition-all ${
-                isZero
-                  ? 'border-red-500 bg-red-50 text-red-900 focus:ring-red-400'
-                  : 'border-slate-200 bg-white text-slate-900 focus:border-[#E60000]'
-              }`}
-            />
           )}
         </div>
 
         {/* Actual Input */}
-        <div className="flex flex-col bg-slate-50/90 hover:bg-slate-50 border border-slate-200/90 focus-within:border-[#E60000] focus-within:bg-white focus-within:ring-2 focus-within:ring-red-100 rounded-xl p-2 transition-all shadow-2xs">
-          <div className="flex items-center justify-between px-1 mb-1">
-            <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1">
-              <TrendingUp className="w-3 h-3 text-slate-400" />
+        <div className="flex flex-col justify-start bg-white border border-slate-200 rounded-lg p-2 transition-all">
+          <div className="flex items-center justify-between px-0.5 mb-1">
+            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+              <TrendingUp className="w-2.5 h-2.5 text-slate-400" />
               <span>Actual</span>
             </span>
-            <span className="text-[9px] font-medium text-slate-400">Delivered</span>
+            <span className="text-[8px] font-medium text-slate-400">Delivered</span>
           </div>
 
           {isSummary ? (
-            <div className="h-11 flex items-center justify-center font-black text-base text-red-950 bg-red-100/70 border border-red-200 rounded-lg">
+            <div className={`h-7 flex items-center justify-center font-bold text-xs text-slate-900 bg-white border border-slate-300 rounded ${
+              isAcquisition ? 'w-1/2 min-w-[65px] max-w-[90px] mx-auto' : 'w-full'
+            }`}>
               {actual !== null ? actual.toLocaleString() : '0'}
             </div>
           ) : (
-            <input
-              type="number"
-              inputMode="decimal"
-              min="0"
-              step="any"
-              placeholder="0"
-              value={actual ?? ''}
-              onChange={(e) => onActualChange?.(e.target.value)}
-              className="w-full h-11 text-center font-black text-base rounded-lg border border-slate-200 bg-white text-slate-900 focus:border-[#E60000] outline-none transition-all"
-            />
+            <div className="flex justify-center w-full">
+              <input
+                type="number"
+                inputMode="decimal"
+                min="0"
+                step="any"
+                placeholder="0"
+                value={actual ?? ''}
+                onChange={(e) => onActualChange?.(e.target.value)}
+                className={`h-7 text-center font-bold text-xs rounded border border-slate-300 bg-white text-slate-900 focus:border-[#E60000] outline-none transition-all ${
+                  isAcquisition ? 'w-1/2 min-w-[65px] max-w-[90px] mx-auto' : 'w-full'
+                }`}
+              />
+            </div>
           )}
         </div>
       </div>
 
       {/* Target Warnings */}
       {isZero && (
-        <div className="text-[10px] text-red-600 font-bold mb-2 px-1">
+        <div className="text-[9px] text-red-600 font-bold mb-1.5 px-1">
           * Target must be greater than 0
         </div>
       )}
       {isNegative && (
-        <div className="text-[10px] text-red-600 font-bold mb-2 px-1">
+        <div className="text-[9px] text-red-600 font-bold mb-1.5 px-1">
           * Values cannot be negative
         </div>
       )}
 
-      {/* 3. Daily Required from Target (Target / 22 Day - 8 Day OFF) */}
-      {showDailyRequired && (
-        <div className="mb-3 bg-gradient-to-r from-slate-50 via-indigo-50/50 to-slate-50 border border-indigo-200/80 rounded-xl p-2.5 flex items-center justify-between gap-2 shadow-2xs">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0">
-              <CalendarDays className="w-3.5 h-3.5" />
+      {/* 3. Metric Section:
+          - ONE DIV: VS in Left - RE in Right, under Both Make a Line and Put The Contribution
+          - Missing / Gap Box
+      */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-slate-200/80">
+        {/* ONE DIV: VS in Left - RE in Right, under Both Make a Line and Put The Contribution */}
+        <div className="bg-white border border-slate-200 rounded-lg p-2 text-center shadow-2xs transition-colors">
+          {/* Top Row: VS in Left - RE in Right */}
+          <div className="grid grid-cols-2 gap-1 items-center">
+            {/* VS in Left */}
+            <div className="text-center pr-1 border-r border-slate-200">
+              <div className="flex items-center justify-between px-0.5">
+                <span className="text-[9px] uppercase font-black text-slate-700 tracking-wider">VS%</span>
+                <span className="text-[7.5px] font-semibold text-slate-400">Act</span>
+              </div>
+              <span className={`text-xs sm:text-sm font-extrabold block leading-tight mt-0.5 ${
+                vs !== null && vs >= 100 ? 'text-emerald-700' : 'text-slate-900'
+              }`}>
+                {formatPercentage(vs)}
+              </span>
             </div>
-            <div className="min-w-0">
-              <div className="text-[11px] font-black text-slate-800 leading-tight">
-                Daily Required
+
+            {/* RE in Right */}
+            <div className="text-center pl-1">
+              <div className="flex items-center justify-between px-0.5">
+                <span className="text-[9px] uppercase font-black text-slate-700 tracking-wider">RE%</span>
+                <span className="text-[7.5px] font-bold text-slate-400">Exp</span>
               </div>
-              <div className="text-[9px] text-slate-500 font-medium">
-                Target / 22 Day (8 Day OFF)
-              </div>
+              <span className="text-xs sm:text-sm font-black text-slate-900 block leading-tight mt-0.5">
+                {formatPercentage(re)}
+              </span>
             </div>
           </div>
 
-          <div className="text-right shrink-0">
-            <div className="text-xs sm:text-sm font-black text-indigo-950 leading-tight">
-              {dailyRequired !== null ? (
-                isCurrency ? (
-                  `${Math.round(dailyRequired).toLocaleString()} EGP`
-                ) : (
-                  `${dailyRequired.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} ${unit || 'Acq'}`
-                )
-              ) : (
-                <span className="text-slate-400 font-normal">0 {unit || 'Acq'}</span>
+          {/* Line under Both */}
+          <div className="border-t border-slate-200 my-1.5" />
+
+          {/* Under Both: Put The Contribution */}
+          <div className="text-center pt-0.5">
+            <div className="flex items-center justify-between px-0.5">
+              <span className="text-[9px] uppercase font-black text-slate-700 tracking-wider">
+                Contribution
+              </span>
+              {weightLabel && (
+                <span className="text-[8px] font-bold text-slate-500 bg-slate-100 px-1 py-0.2 rounded">
+                  {weightLabel}
+                </span>
               )}
-              <span className="text-[10px] text-indigo-600 font-bold ml-1">/ Day</span>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* 4. Ergonomic 2x2 Metric Grid: VS%, RE%, Contribution, Gap / Missing */}
-      <div className="grid grid-cols-2 gap-2 pt-2.5 border-t border-slate-150">
-        {/* Metric 1: VS% (Actual Achievement) */}
-        <div className="flex flex-col justify-between p-2.5 rounded-xl bg-slate-50/90 border border-slate-200/80">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] uppercase font-black text-slate-700 tracking-wider">VS%</span>
-            <span className="text-[8px] font-bold text-slate-400">Actual</span>
-          </div>
-          <div className="mt-1">
-            <span className={`text-base font-black leading-tight ${
-              vs !== null && vs >= 100 ? 'text-emerald-700' : 'text-slate-900'
-            }`}>
-              {formatPercentage(vs)}
+            <span className="text-xs sm:text-sm font-black text-slate-900 block leading-tight mt-0.5">
+              {formatPercentage(res.contribution)}
             </span>
           </div>
         </div>
 
-        {/* Metric 2: RE% (Projected by Month End) */}
-        <div className="flex flex-col justify-between p-2.5 rounded-xl bg-indigo-50/80 border border-indigo-200/80">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] uppercase font-black text-indigo-700 tracking-wider">RE%</span>
-            <span className="text-[8px] font-bold text-indigo-500">Projected</span>
-          </div>
-          <div className="mt-1">
-            <span className="text-base font-black text-indigo-950 leading-tight">
-              {formatPercentage(re)}
-            </span>
-          </div>
-        </div>
-
-        {/* Metric 3: Weighted Contribution */}
-        <div className="flex flex-col justify-between p-2.5 rounded-xl bg-slate-50/90 border border-slate-200/80">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Contribution</span>
-            <span className="text-[8px] font-medium text-slate-400">Weight</span>
-          </div>
-          <div className="mt-1 flex items-baseline gap-1">
-            <span className="text-sm font-black text-slate-800 leading-tight">
-              {res.contribution !== null ? formatPercentage(res.contribution) : '—'}
-            </span>
-            {weightLabel && (
-              <span className="text-[9px] font-semibold text-slate-400">of {weightLabel}</span>
-            )}
-          </div>
-        </div>
-
-        {/* Metric 4: Gap or Missing */}
-        <div className="flex flex-col justify-between p-2.5 rounded-xl bg-slate-50/90 border border-slate-200/80">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Gap / Missing</span>
+        {/* Missing / Gap Box */}
+        <div className="bg-white border border-slate-200 rounded-lg p-2 text-center shadow-2xs flex flex-col justify-between">
+          <div className="flex items-center justify-between px-0.5">
+            <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Gap / Missing</span>
             <span className="text-[8px] font-medium text-slate-400">{unit}</span>
           </div>
-          <div className="mt-1">
-            <span className={`text-sm font-black leading-tight flex items-center gap-1 ${
+          <div className="my-auto py-1">
+            <span className={`text-xs sm:text-sm font-black leading-tight flex items-center justify-center gap-1 ${
               res.missing !== null
                 ? res.missing > 0
                   ? 'text-[#E60000]'
@@ -264,8 +276,8 @@ const MobileCard = React.memo(function MobileCard({
                 res.missing > 0 ? (
                   `-${res.missing.toLocaleString()}`
                 ) : (
-                  <span className="flex items-center gap-0.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <span className="flex items-center gap-0.5 text-emerald-600">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
                     <span>Target Met</span>
                   </span>
                 )
@@ -274,6 +286,9 @@ const MobileCard = React.memo(function MobileCard({
               )}
             </span>
           </div>
+          <span className="text-[8px] text-slate-400 block font-medium">
+            {isExceeded ? 'Goal Exceeded' : (res.missing !== null && res.missing > 0 ? 'Remaining to target' : 'Delivered')}
+          </span>
         </div>
       </div>
     </div>
@@ -283,10 +298,17 @@ const MobileCard = React.memo(function MobileCard({
 interface CategoryGroup {
   name: 'Acquisition' | 'Enterprise' | 'Terminal' | 'Fixed';
   weight: string;
+  weightLabel: string;
   icon: typeof Zap;
   borderColor: string;
   headerBorder: string;
+  activeTabBg: string;
+  tabBorder: string;
+  inactiveTabText: string;
   badgeBg: string;
+  badgePillBg: string;
+  badgePillText: string;
+  badgePillBorder: string;
   textColor: string;
   getContribution: (res: CommissionResult) => number | null;
   getRE: (res: CommissionResult) => number | null;
@@ -295,45 +317,73 @@ interface CategoryGroup {
 const CATEGORY_GROUPS: CategoryGroup[] = [
   {
     name: 'Acquisition',
-    weight: 'Weight: 60%',
+    weight: 'Total 60%',
+    weightLabel: '60%',
     icon: Zap,
-    borderColor: 'border-red-200',
+    borderColor: 'border-2 border-red-200 hover:border-red-300',
     headerBorder: 'border-red-100',
+    activeTabBg: 'bg-[#E60000]',
+    tabBorder: 'border-red-200 hover:border-red-400',
+    inactiveTabText: 'text-red-700',
     badgeBg: 'bg-[#E60000]',
+    badgePillBg: 'bg-red-50',
+    badgePillText: 'text-[#E60000]',
+    badgePillBorder: 'border-red-200',
     textColor: 'text-[#E60000]',
     getContribution: (res) => res.acquisition.total.contribution,
     getRE: (res) => (res.acquisition.total.re !== null && res.acquisition.total.re !== undefined ? res.acquisition.total.re * 0.60 : null),
   },
   {
     name: 'Enterprise',
-    weight: 'Total: 10%',
+    weight: 'Total 10%',
+    weightLabel: '10%',
     icon: Building2,
-    borderColor: 'border-indigo-200',
+    borderColor: 'border-2 border-indigo-200 hover:border-indigo-300',
     headerBorder: 'border-indigo-100',
+    activeTabBg: 'bg-indigo-600',
+    tabBorder: 'border-indigo-200 hover:border-indigo-400',
+    inactiveTabText: 'text-indigo-700',
     badgeBg: 'bg-indigo-600',
+    badgePillBg: 'bg-indigo-50',
+    badgePillText: 'text-indigo-700',
+    badgePillBorder: 'border-indigo-200',
     textColor: 'text-indigo-700',
     getContribution: (res) => res.enterprise.totalContribution,
     getRE: (res) => res.enterprise.totalRE ?? null,
   },
   {
     name: 'Terminal',
-    weight: 'Weight: 10%',
+    weight: 'Total 10%',
+    weightLabel: '10%',
     icon: Smartphone,
-    borderColor: 'border-amber-200',
+    borderColor: 'border-2 border-amber-200 hover:border-amber-300',
     headerBorder: 'border-amber-100',
+    activeTabBg: 'bg-amber-600',
+    tabBorder: 'border-amber-200 hover:border-amber-400',
+    inactiveTabText: 'text-amber-700',
     badgeBg: 'bg-amber-600',
+    badgePillBg: 'bg-amber-50',
+    badgePillText: 'text-amber-700',
+    badgePillBorder: 'border-amber-200',
     textColor: 'text-amber-700',
     getContribution: (res) => res.terminal.contribution,
     getRE: (res) => (res.terminal.re !== null && res.terminal.re !== undefined ? res.terminal.re * 0.10 : null),
   },
   {
     name: 'Fixed',
-    weight: 'Total: 20%',
+    weight: 'Total 20%',
+    weightLabel: '20%',
     icon: Wifi,
-    borderColor: 'border-emerald-200',
-    headerBorder: 'border-emerald-100',
-    badgeBg: 'bg-emerald-600',
-    textColor: 'text-emerald-700',
+    borderColor: 'border-2 border-teal-200 hover:border-teal-300',
+    headerBorder: 'border-teal-100',
+    activeTabBg: 'bg-teal-600',
+    tabBorder: 'border-teal-200 hover:border-teal-400',
+    inactiveTabText: 'text-teal-700',
+    badgeBg: 'bg-teal-600',
+    badgePillBg: 'bg-teal-50',
+    badgePillText: 'text-teal-700',
+    badgePillBorder: 'border-teal-200',
+    textColor: 'text-teal-700',
     getContribution: (res) => res.fixed.totalContribution,
     getRE: (res) => res.fixed.totalRE ?? null,
   },
@@ -359,18 +409,18 @@ export function MobileCommissionCards({
 
   return (
     <div className="space-y-2.5 sm:space-y-3">
-      {/* Category Segmented Scrollable Filter Bar */}
+      {/* Category Segmented Scrollable Filter Bar with Unique Tab Colors */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar text-xs font-semibold px-0.5">
         <button
           type="button"
           onClick={() => setActiveTab('all')}
-          className={`h-8.5 sm:h-9 px-3.5 rounded-xl whitespace-nowrap transition-all shrink-0 flex items-center gap-1 font-bold ${
+          className={`h-9 px-3.5 rounded-xl whitespace-nowrap transition-all shrink-0 flex items-center gap-1.5 font-bold cursor-pointer ${
             activeTab === 'all'
               ? 'bg-slate-900 text-white shadow-xs'
-              : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+              : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
           }`}
         >
-          <span>All Boxs</span>
+          <span>All Boxes</span>
         </button>
 
         {CATEGORY_GROUPS.map((cat) => {
@@ -381,18 +431,18 @@ export function MobileCommissionCards({
               key={cat.name}
               type="button"
               onClick={() => setActiveTab(cat.name)}
-              className={`h-9 px-3.5 rounded-xl whitespace-nowrap transition-all shrink-0 flex items-center gap-1.5 font-bold ${
+              className={`h-9 px-3.5 rounded-xl whitespace-nowrap transition-all shrink-0 flex items-center gap-1.5 font-bold cursor-pointer ${
                 isActive
-                  ? `${cat.badgeBg} text-white shadow-xs`
-                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                  ? `${cat.activeTabBg} text-white shadow-xs`
+                  : `bg-white ${cat.inactiveTabText} border ${cat.tabBorder} hover:bg-slate-50`
               }`}
             >
               <Icon className="w-3.5 h-3.5" />
               <span>{cat.name}</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-md ${
-                isActive ? 'bg-black/20 text-white' : 'bg-slate-100 text-slate-500'
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-md font-bold ${
+                isActive ? 'bg-black/20 text-white' : `${cat.badgePillBg} ${cat.badgePillText}`
               }`}>
-                {cat.weight.replace(/[^0-9%]/g, '')}
+                {cat.weightLabel}
               </span>
             </button>
           );
@@ -411,32 +461,49 @@ export function MobileCommissionCards({
         return (
           <div
             key={cat.name}
-            className={`bg-white rounded-2xl border ${cat.borderColor} p-3.5 sm:p-4 shadow-xs space-y-3.5`}
+            className={`bg-white rounded-2xl ${cat.borderColor} p-3.5 sm:p-4 shadow-xs space-y-3.5 transition-all`}
           >
-            {/* Category Header with both VS% and RE% */}
+            {/* Category Header with Title + Total XX% beside VS & RE box */}
             <div className={`flex flex-col gap-2 pb-2.5 border-b ${cat.headerBorder}`}>
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <div className="flex items-center gap-2">
-                  <div className={`w-7 h-7 rounded-lg ${cat.badgeBg} text-white flex items-center justify-center shadow-2xs`}>
+              <div className="flex items-center justify-between gap-2">
+                {/* Left Side: Icon + Name + Total XX% Badge (Beside VS & RE box) */}
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg ${cat.badgeBg} text-white flex items-center justify-center shadow-2xs shrink-0`}>
                     <Icon className="w-4 h-4" />
                   </div>
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <h3 className="font-black text-slate-900 text-base">{cat.name}</h3>
-                      <span className="text-[10px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-                        {cat.weight}
-                      </span>
-                    </div>
+                  <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
+                    <h3 className="font-black text-slate-900 text-sm sm:text-base tracking-tight truncate">
+                      {cat.name}
+                    </h3>
+                    <span className={`text-[10px] sm:text-[11px] font-black ${cat.badgePillBg} ${cat.badgePillText} border ${cat.badgePillBorder} px-2 py-0.5 rounded-full shrink-0 shadow-2xs`}>
+                      {cat.weight}
+                    </span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 text-xs font-black">
-                  <span className="text-slate-800 bg-slate-100 border border-slate-200/80 px-2.5 py-1 rounded-lg">
-                    VS: {formatPercentage(vsContribution)}
-                  </span>
-                  <span className="text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-lg">
-                    RE: {formatPercentage(reContribution)}
-                  </span>
+                {/* Right Side: VS & RE in one div ( VS in Left - RE in Right ) under Both Make a Line and Put The Contribution */}
+                <div className="bg-white border border-slate-200 rounded-lg p-1.5 shadow-2xs min-w-[130px] shrink-0">
+                  <div className="grid grid-cols-2 gap-1 items-center text-center">
+                    <div className="pr-1 border-r border-slate-200">
+                      <span className="text-[8.5px] uppercase font-black text-slate-600 block">VS%</span>
+                      <span className="text-xs font-black text-slate-900 leading-tight block">
+                        {formatPercentage(vsContribution)}
+                      </span>
+                    </div>
+                    <div className="pl-1">
+                      <span className="text-[8.5px] uppercase font-black text-slate-600 block">RE%</span>
+                      <span className="text-xs font-black text-slate-900 leading-tight block">
+                        {formatPercentage(reContribution)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="border-t border-slate-200 my-1" />
+                  <div className="flex items-center justify-between px-0.5 text-[8.5px] uppercase font-black text-slate-600">
+                    <span>Contribution</span>
+                    <span className="text-xs font-black text-slate-900">
+                      {formatPercentage(vsContribution)}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -481,6 +548,7 @@ export function MobileCommissionCards({
                     isSummary={isSummary}
                     showDailyRequired={showDailyRequired}
                     isCurrency={isCurrency}
+                    isAcquisition={cat.name === 'Acquisition'}
                     onTargetChange={(val) => handleInputChange(col, 'target', val)}
                     onActualChange={(val) => handleInputChange(col, 'actual', val)}
                   />

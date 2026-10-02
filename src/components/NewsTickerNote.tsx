@@ -75,7 +75,7 @@ export const NewsTickerNote = React.memo(function NewsTickerNote({
 
   return (
     <div
-      className={`news-ticker-container relative flex items-center gap-1.5 bg-gradient-to-r from-red-50 via-white to-red-50 border border-red-300 hover:border-red-400 rounded-lg px-2 py-1 shadow-2xs overflow-hidden transition-all ${className}`}
+      className={`news-ticker-container relative flex items-center gap-1.5 bg-white border border-slate-200 hover:border-slate-300 rounded-lg px-2 py-1 shadow-2xs overflow-hidden transition-all ${className}`}
     >
       {/* News Badge with live pulse */}
       <div className="flex items-center gap-1 bg-[#E60000] text-white text-[9px] font-black uppercase px-2 py-0.5 rounded shadow-2xs shrink-0 select-none tracking-wider">

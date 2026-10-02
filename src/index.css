@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Full Report Export Mode: forces full desktop width so no columns or inputs are cut off */
 .report-export-mode {
   width: 1440px !important;
