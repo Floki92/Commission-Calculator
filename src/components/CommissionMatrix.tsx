@@ -2,7 +2,7 @@ import React from 'react';
 import { CommissionInput, CommissionResult, ComponentInput } from '../features/commission/commission.types';
 import { COMMISSION_WEIGHTS, UNITS } from '../features/commission/commission.constants';
 import { formatPercentage } from '../features/commission/commission.utils';
-import { Zap, Building2, Smartphone, Wifi, Layers, Boxes, Sigma, CalendarDays } from 'lucide-react';
+import { Zap, Building2, Smartphone, Wifi, Layers, Boxes, Sigma, CalendarDays, AlertCircle } from 'lucide-react';
 import { NewsTickerNote } from './NewsTickerNote';
 
 export interface CommissionMatrixProps {
@@ -311,6 +311,13 @@ interface MatrixInputCellProps {
   onChange?: (val: string) => void;
   summaryValue?: number | null;
   isTarget?: boolean;
+  res?: {
+    achievement: number | null;
+    vs?: number | null;
+    re?: number | null;
+    contribution: number | null;
+    missing: number | null;
+  };
 }
 
 const MatrixInputCell = React.memo(function MatrixInputCell({
@@ -319,13 +326,17 @@ const MatrixInputCell = React.memo(function MatrixInputCell({
   onChange,
   summaryValue,
   isTarget = false,
+  res,
 }: MatrixInputCellProps) {
   const isAcq = col.category === 'Acquisition';
+  const isAcqOrTerminal = col.category === 'Acquisition' || col.id === 'terminal';
   const widthClass = isAcq ? 'min-w-[130px] sm:min-w-[150px] w-[145px]' : 'min-w-[115px] sm:min-w-[130px]';
   const targetNum = col.isSummary ? summaryValue : value;
   const isCurrency = col.id === 'terminal' || col.unit === 'EGP';
-  const showDaily = isTarget && (col.category === 'Acquisition' || col.id === 'terminal');
+  const showDaily = isTarget && isAcqOrTerminal;
   const dailyRequired = showDaily && targetNum !== null && targetNum !== undefined && targetNum > 0 ? targetNum / 22 : null;
+  const showGap = !isTarget && res !== undefined;
+  const isExceeded = res?.missing === 0 && res?.achievement !== null && (res?.achievement ?? 0) >= 100;
 
   if (col.isSummary) {
     return (
@@ -367,6 +378,31 @@ const MatrixInputCell = React.memo(function MatrixInputCell({
               </div>
               <span className="text-[7.5px] text-slate-400 block font-medium mt-0.5">
                 Target / 22 Day
+              </span>
+            </div>
+          )}
+
+          {/* Under actual div input make a Line and Put GAP / Missing (Only for Acquisition & Terminal) */}
+          {showGap && res && (
+            <div className="w-full pt-1.5 mt-1.5 border-t border-slate-200 text-center">
+              <div className="flex items-center justify-center gap-1 text-[9px] sm:text-[10px] text-slate-700 font-bold">
+                <AlertCircle className="w-3 h-3 text-slate-500 shrink-0" />
+                <span>Gap:</span>
+                <span className={`font-extrabold ${res.missing !== null && res.missing > 0 ? 'text-[#E60000]' : 'text-emerald-600'}`}>
+                  {res.missing !== null
+                    ? res.missing > 0
+                      ? `-${res.missing.toLocaleString()} ${col.unit || "GA's"}`
+                      : isExceeded
+                      ? 'Goal Met ✓'
+                      : `0 ${col.unit || "GA's"}`
+                    : '—'}
+                </span>
+                <span className="text-[8px] text-slate-400 font-semibold">
+                  {res.missing !== null && res.missing > 0 ? 'missing' : 'met'}
+                </span>
+              </div>
+              <span className="text-[7.5px] text-slate-400 block font-medium mt-0.5">
+                {isExceeded ? 'Goal Exceeded' : (res.missing !== null && res.missing > 0 ? 'Remaining to target' : 'Delivered')}
               </span>
             </div>
           )}
@@ -431,6 +467,31 @@ const MatrixInputCell = React.memo(function MatrixInputCell({
             </span>
           </div>
         )}
+
+        {/* Under actual div input make a Line and Put GAP / Missing (Only for Acquisition & Terminal) */}
+        {showGap && res && (
+          <div className="w-full pt-1.5 mt-1.5 border-t border-slate-200 text-center">
+            <div className="flex items-center justify-center gap-1 text-[9px] sm:text-[10px] text-slate-700 font-bold">
+              <AlertCircle className="w-3 h-3 text-slate-500 shrink-0" />
+              <span>Gap:</span>
+              <span className={`font-extrabold ${res.missing !== null && res.missing > 0 ? 'text-[#E60000]' : 'text-emerald-600'}`}>
+                {res.missing !== null
+                  ? res.missing > 0
+                    ? `-${isCurrency ? `${res.missing.toLocaleString()} EGP` : `${res.missing.toLocaleString()} ${col.unit || "GA's"}`}`
+                    : isExceeded
+                    ? 'Goal Met ✓'
+                    : `0 ${col.unit || "GA's"}`
+                  : '—'}
+              </span>
+              <span className="text-[8px] text-slate-400 font-semibold">
+                {res.missing !== null && res.missing > 0 ? 'missing' : 'met'}
+              </span>
+            </div>
+            <span className="text-[7.5px] text-slate-400 block font-medium mt-0.5">
+              {isExceeded ? 'Goal Exceeded' : (res.missing !== null && res.missing > 0 ? 'Remaining to target' : 'Delivered')}
+            </span>
+          </div>
+        )}
       </div>
     </td>
   );
@@ -459,6 +520,7 @@ const MatrixPercentageCell = React.memo(function MatrixPercentageCell({
   const vs = res.vs ?? res.achievement;
   const re = res.re ?? null;
   const isAcq = col.category === 'Acquisition';
+  const isAcqOrTerminal = col.category === 'Acquisition' || col.id === 'terminal';
   const widthClass = isAcq ? 'min-w-[130px] sm:min-w-[150px] w-[145px]' : 'min-w-[115px] sm:min-w-[130px]';
 
   return (
@@ -512,38 +574,6 @@ const MatrixPercentageCell = React.memo(function MatrixPercentageCell({
             </span>
           </div>
         </div>
-
-        {/* Missing Box */}
-        <div className="bg-white border border-slate-200 rounded-lg p-1.5 sm:p-2 text-center shadow-2xs min-h-[44px] flex flex-col justify-center transition-colors">
-          <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-500 block mb-0.5">
-            Missing
-          </span>
-          <span
-            className={`text-xs sm:text-sm font-bold block leading-tight ${
-              res.missing !== null
-                ? res.missing > 0
-                  ? 'text-[#E60000]'
-                  : 'text-emerald-600'
-                : 'text-slate-400'
-            }`}
-          >
-            {res.missing !== null ? (
-              res.missing > 0 ? (
-                `-${res.missing.toLocaleString()}`
-              ) : (
-                isExceeded ? '✓ Met' : '0'
-              )
-            ) : (
-              '—'
-            )}
-          </span>
-          {res.missing !== null && (
-            <span className="text-[9px] sm:text-[10px] text-slate-400 block mt-0.5">
-              {col.unit || 'Points'}
-            </span>
-          )}
-        </div>
-
       </div>
     </td>
   );
@@ -727,6 +757,7 @@ export function CommissionMatrix({ input, result, onChange, acqNote, onAcqNoteCh
                   value={col.getter(input).actual}
                   summaryValue={result.acquisition.totalActual}
                   onChange={(val) => handleInputChange(col, 'actual', val)}
+                  res={col.resultGetter(result)}
                 />
               ))}
             </tr>

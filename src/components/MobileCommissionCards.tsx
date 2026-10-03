@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { CommissionInput, CommissionResult, ComponentResult } from '../features/commission/commission.types';
 import { formatPercentage } from '../features/commission/commission.utils';
 import { MATRIX_COLUMNS, ColumnConfig } from './CommissionMatrix';
-import { Zap, Building2, Smartphone, Wifi, CheckCircle2, TrendingUp, Target, CalendarDays } from 'lucide-react';
+import { Zap, Building2, Smartphone, Wifi, CheckCircle2, TrendingUp, Target, CalendarDays, AlertCircle } from 'lucide-react';
 import { NewsTickerNote } from './NewsTickerNote';
 
 interface MobileCommissionCardsProps {
@@ -157,37 +157,62 @@ const MobileCard = React.memo(function MobileCard({
         </div>
 
         {/* Actual Input */}
-        <div className="flex flex-col justify-start bg-white border border-slate-200 rounded-lg p-2 transition-all">
-          <div className="flex items-center justify-between px-0.5 mb-1">
-            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
-              <TrendingUp className="w-2.5 h-2.5 text-slate-400" />
-              <span>Actual</span>
-            </span>
-            <span className="text-[8px] font-medium text-slate-400">Delivered</span>
+        <div className="flex flex-col justify-between bg-white border border-slate-200 rounded-lg p-2 transition-all">
+          <div>
+            <div className="flex items-center justify-between px-0.5 mb-1">
+              <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                <TrendingUp className="w-2.5 h-2.5 text-slate-400" />
+                <span>Actual</span>
+              </span>
+              <span className="text-[8px] font-medium text-slate-400">Delivered</span>
+            </div>
+
+            {isSummary ? (
+              <div className={`h-7 flex items-center justify-center font-bold text-xs text-slate-900 bg-white border border-slate-300 rounded ${
+                isAcquisition ? 'w-1/2 min-w-[65px] max-w-[90px] mx-auto' : 'w-full'
+              }`}>
+                {actual !== null ? actual.toLocaleString() : '0'}
+              </div>
+            ) : (
+              <div className="flex justify-center w-full">
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="any"
+                  placeholder="0"
+                  value={actual ?? ''}
+                  onChange={(e) => onActualChange?.(e.target.value)}
+                  className={`h-7 text-center font-bold text-xs rounded border border-slate-300 bg-white text-slate-900 focus:border-[#E60000] outline-none transition-all ${
+                    isAcquisition ? 'w-1/2 min-w-[65px] max-w-[90px] mx-auto' : 'w-full'
+                  }`}
+                />
+              </div>
+            )}
           </div>
 
-          {isSummary ? (
-            <div className={`h-7 flex items-center justify-center font-bold text-xs text-slate-900 bg-white border border-slate-300 rounded ${
-              isAcquisition ? 'w-1/2 min-w-[65px] max-w-[90px] mx-auto' : 'w-full'
-            }`}>
-              {actual !== null ? actual.toLocaleString() : '0'}
+          {/* Under actual div input make a Line and Put GAP / Missing (For All Categories) */}
+          <div className="w-full pt-1.5 mt-1.5 border-t border-slate-200 text-center">
+            <div className="flex items-center justify-center gap-1 text-[9px] text-slate-700 font-bold">
+              <AlertCircle className="w-2.5 h-2.5 text-slate-500 shrink-0" />
+              <span>Gap:</span>
+              <span className={`font-extrabold ${res.missing !== null && res.missing > 0 ? 'text-[#E60000]' : 'text-emerald-600'}`}>
+                {res.missing !== null
+                  ? res.missing > 0
+                    ? `-${isCurrency ? `${res.missing.toLocaleString()} EGP` : `${res.missing.toLocaleString()} ${unit || "GA's"}`}`
+                    : isExceeded
+                    ? 'Goal Met ✓'
+                    : `0 ${unit || "GA's"}`
+                  : '—'}
+              </span>
+              <span className="text-[7.5px] text-slate-400 font-semibold">
+                {res.missing !== null && res.missing > 0 ? 'missing' : 'met'}
+              </span>
             </div>
-          ) : (
-            <div className="flex justify-center w-full">
-              <input
-                type="number"
-                inputMode="decimal"
-                min="0"
-                step="any"
-                placeholder="0"
-                value={actual ?? ''}
-                onChange={(e) => onActualChange?.(e.target.value)}
-                className={`h-7 text-center font-bold text-xs rounded border border-slate-300 bg-white text-slate-900 focus:border-[#E60000] outline-none transition-all ${
-                  isAcquisition ? 'w-1/2 min-w-[65px] max-w-[90px] mx-auto' : 'w-full'
-                }`}
-              />
-            </div>
-          )}
+            <span className="text-[7px] text-slate-400 block font-medium mt-0.5">
+              {isExceeded ? 'Goal Exceeded' : (res.missing !== null && res.missing > 0 ? 'Remaining to target' : 'Delivered')}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -205,9 +230,8 @@ const MobileCard = React.memo(function MobileCard({
 
       {/* 3. Metric Section:
           - ONE DIV: VS in Left - RE in Right, under Both Make a Line and Put The Contribution
-          - Missing / Gap Box
       */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-slate-200/80">
+      <div className="pt-2 border-t border-slate-200/80">
         {/* ONE DIV: VS in Left - RE in Right, under Both Make a Line and Put The Contribution */}
         <div className="bg-white border border-slate-200 rounded-lg p-2 text-center shadow-2xs transition-colors">
           {/* Top Row: VS in Left - RE in Right */}
@@ -256,39 +280,6 @@ const MobileCard = React.memo(function MobileCard({
               {formatPercentage(res.contribution)}
             </span>
           </div>
-        </div>
-
-        {/* Missing / Gap Box */}
-        <div className="bg-white border border-slate-200 rounded-lg p-2 text-center shadow-2xs flex flex-col justify-between">
-          <div className="flex items-center justify-between px-0.5">
-            <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Gap / Missing</span>
-            <span className="text-[8px] font-medium text-slate-400">{unit}</span>
-          </div>
-          <div className="my-auto py-1">
-            <span className={`text-xs sm:text-sm font-black leading-tight flex items-center justify-center gap-1 ${
-              res.missing !== null
-                ? res.missing > 0
-                  ? 'text-[#E60000]'
-                  : 'text-emerald-600'
-                : 'text-slate-400'
-            }`}>
-              {res.missing !== null ? (
-                res.missing > 0 ? (
-                  `-${res.missing.toLocaleString()}`
-                ) : (
-                  <span className="flex items-center gap-0.5 text-emerald-600">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
-                    <span>Target Met</span>
-                  </span>
-                )
-              ) : (
-                '—'
-              )}
-            </span>
-          </div>
-          <span className="text-[8px] text-slate-400 block font-medium">
-            {isExceeded ? 'Goal Exceeded' : (res.missing !== null && res.missing > 0 ? 'Remaining to target' : 'Delivered')}
-          </span>
         </div>
       </div>
     </div>
